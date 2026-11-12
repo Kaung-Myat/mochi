@@ -1,0 +1,13 @@
+# Product source and files without a supported parser
+PRD.md
+.env.example
+.gitignore
+.firebaserc
+
+# Generated output
+.next/
+node_modules/
+coverage/
+playwright-report/
+test-results/
+.firebase/

@@ -1,0 +1,16 @@
+node_modules/
+.next/
+functions/
+out/
+coverage/
+playwright-report/
+test-results/
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+.env
+.env.local
+.env.*.local
+!.env.example
+.DS_Store

@@ -1,0 +1,61 @@
+{
+  "name": "mochi",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "npm@11.14.1",
+  "engines": {
+    "node": ">=20.9.0"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "npm run typecheck && next build --webpack",
+    "start": "next start",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:rules": "XDG_CONFIG_HOME=.firebase/config FIREBASE_CLI_DISABLE_UPDATE_CHECK=true firebase emulators:exec --project demo-mochi --only firestore,auth \"vitest run --config vitest.rules.config.ts\"",
+    "e2e": "playwright test",
+    "e2e:install": "playwright install --with-deps chromium",
+    "emulators": "XDG_CONFIG_HOME=.firebase/config FIREBASE_CLI_DISABLE_UPDATE_CHECK=true firebase emulators:start --project demo-mochi",
+    "emulators:export": "XDG_CONFIG_HOME=.firebase/config FIREBASE_CLI_DISABLE_UPDATE_CHECK=true firebase emulators:start --project demo-mochi --export-on-exit=.firebase/emulator-data"
+  },
+  "dependencies": {
+    "@upstash/qstash": "2.12.1",
+    "firebase": "12.9.0",
+    "firebase-admin": "14.5.0",
+    "luxon": "3.7.2",
+    "next": "16.4.6",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "5.0.0",
+    "@tailwindcss/postcss": "4.3.5",
+    "@testing-library/dom": "10.4.2",
+    "@testing-library/jest-dom": "7.0.1",
+    "@testing-library/react": "16.3.3",
+    "@types/luxon": "3.7.6",
+    "@types/node": "26.6.6",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.3.0",
+    "eslint": "9.39.5",
+    "eslint-config-next": "16.4.6",
+    "firebase-tools": "15.35.0",
+    "jsdom": "26.1.0",
+    "playwright": "1.65.0",
+    "prettier": "3.9.10",
+    "prettier-plugin-tailwindcss": "0.8.1",
+    "tailwindcss": "4.3.5",
+    "typescript": "5.9.3",
+    "vitest": "5.1.0"
+  },
+  "overrides": {
+    "@grpc/grpc-js": "1.14.7"
+  }
+}

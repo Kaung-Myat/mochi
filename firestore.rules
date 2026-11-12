@@ -1,0 +1,169 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create, update: if isOwner(userId) && isValidProfile(userId);
+      allow delete: if false;
+    }
+
+    match /users/{userId}/routines/{routineId} {
+      allow read: if isOwner(userId);
+      allow create, update: if isOwner(userId) && isValidRoutine(routineId);
+      allow delete: if isOwner(userId);
+    }
+
+    match /users/{userId}/dailyLogs/{localDate}/events/{eventId} {
+      allow read: if isOwner(userId);
+      allow create, update: if isOwner(userId) && isValidDailyEvent(eventId);
+      allow delete: if isOwner(userId);
+    }
+
+    match /users/{userId}/tummyEntries/{entryId} {
+      allow read: if isOwner(userId);
+      allow create, update: if isOwner(userId) && isValidTummyEntry();
+      allow delete: if isOwner(userId);
+    }
+
+    match /users/{userId}/devices/{deviceId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidDevice(deviceId);
+      allow update: if isOwner(userId) && isValidDevice(deviceId)
+        && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isOwner(userId);
+    }
+
+    match /users/{userId}/reminderSettings/{settingsId} {
+      allow read: if isOwner(userId) && settingsId == 'preferences';
+      allow create: if isOwner(userId) && settingsId == 'preferences' && isValidReminderPreferences();
+      allow update: if isOwner(userId) && settingsId == 'preferences'
+        && isValidReminderPreferences()
+        && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isOwner(userId) && settingsId == 'preferences';
+    }
+
+    match /users/{userId}/reminderOccurrences/{occurrenceId} {
+      allow read: if isOwner(userId);
+      allow write: if false;
+    }
+
+    // Any other future private collections remain deny-by-default.
+    match /users/{userId}/{document=**} { allow read, write: if false; }
+
+    function isOwner(userId) { return request.auth != null && request.auth.uid == userId; }
+
+    function isValidProfile(userId) {
+      let profile = request.resource.data;
+      return profile.keys().hasOnly([
+          'uid', 'displayName', 'timezone', 'locale', 'onboardingVersion',
+          'onboardingCompletedAt', 'createdAt', 'updatedAt'
+        ]) && profile.uid == userId
+        && profile.timezone is string && profile.timezone.size() >= 1 && profile.timezone.size() <= 100
+        && profile.locale in ['my', 'en'] && profile.onboardingVersion == 1
+        && profile.createdAt is timestamp && profile.updatedAt is timestamp
+        && (!('displayName' in profile) || (profile.displayName is string && profile.displayName.size() >= 1 && profile.displayName.size() <= 40))
+        && (profile.onboardingCompletedAt == null || profile.onboardingCompletedAt is timestamp);
+    }
+
+    function hasValidRoutineBase(routine) {
+      return routine.label is string && routine.label.size() >= 1 && routine.label.size() <= 40
+        && routine.enabled is bool
+        && routine.createdAt is timestamp && routine.updatedAt is timestamp;
+    }
+
+    function isTime(value) {
+      return value is string && value.matches('^([01][0-9]|2[0-3]):[0-5][0-9]$');
+    }
+
+    function isValidRoutine(routineId) {
+      let routine = request.resource.data;
+      return hasValidRoutineBase(routine)
+        && (
+          (routine.type == 'hydration' && routineId == 'hydration'
+            && routine.keys().hasOnly(['type', 'label', 'enabled', 'mode', 'startLocalTime', 'endLocalTime', 'intervalMinutes', 'dailyTargetGlasses', 'millilitersPerGlass', 'createdAt', 'updatedAt'])
+            && routine.mode in ['interval', 'times']
+            && isTime(routine.startLocalTime) && isTime(routine.endLocalTime)
+            && routine.intervalMinutes is int && routine.intervalMinutes >= 30 && routine.intervalMinutes <= 480
+            && routine.dailyTargetGlasses is int && routine.dailyTargetGlasses >= 1 && routine.dailyTargetGlasses <= 30
+            && routine.millilitersPerGlass is int && routine.millilitersPerGlass >= 50 && routine.millilitersPerGlass <= 2000)
+          ||
+          (routine.type == 'meal'
+            && routine.keys().hasOnly(['type', 'label', 'enabled', 'localTime', 'sortOrder', 'createdAt', 'updatedAt'])
+            && isTime(routine.localTime)
+            && routine.sortOrder is int && routine.sortOrder >= 0 && routine.sortOrder <= 50)
+          ||
+          (routine.type == 'sleep' && routineId == 'sleep'
+            && routine.keys().hasOnly(['type', 'label', 'enabled', 'bedtimeLocalTime', 'wakeLocalTime', 'windDownMinutes', 'createdAt', 'updatedAt'])
+            && isTime(routine.bedtimeLocalTime) && isTime(routine.wakeLocalTime)
+            && routine.windDownMinutes is int && routine.windDownMinutes >= 0 && routine.windDownMinutes <= 180)
+        );
+    }
+
+    function isValidDailyEvent(eventId) {
+      let event = request.resource.data;
+      return event.keys().hasOnly(['type', 'routineId', 'occurredAt', 'clientRequestId', 'note', 'createdAt', 'updatedAt'])
+        && event.type in ['water', 'meal_completed', 'meal_skipped', 'bedtime_logged', 'wake_logged']
+        && event.clientRequestId == eventId
+        && event.occurredAt is timestamp && event.createdAt is timestamp && event.updatedAt is timestamp
+        && (!('routineId' in event) || (event.routineId is string && event.routineId.size() >= 1 && event.routineId.size() <= 80))
+        && (!('note' in event) || (event.note is string && event.note.size() <= 200));
+    }
+
+    function isValidTummyEntry() {
+      let entry = request.resource.data;
+      return entry.keys().hasOnly([
+          'occurredAt', 'timezone', 'intensity', 'symptoms', 'location',
+          'durationMinutes', 'mealRelation', 'moodOrEnergy', 'note',
+          'createdAt', 'updatedAt'
+        ])
+        && entry.occurredAt is timestamp
+        && entry.timezone is string && entry.timezone.size() >= 1 && entry.timezone.size() <= 100
+        && entry.intensity is int && entry.intensity >= 0 && entry.intensity <= 10
+        && entry.symptoms is list && entry.symptoms.size() >= 1 && entry.symptoms.size() <= 8
+        && entry.symptoms.hasOnly([
+          'pain_cramp', 'bloating', 'nausea', 'heartburn',
+          'diarrhea', 'constipation', 'gas', 'other'
+        ])
+        && entry.createdAt is timestamp && entry.updatedAt is timestamp
+        && (!('location' in entry) || entry.location in ['upper', 'lower', 'left', 'right', 'all_over', 'unsure'])
+        && (!('durationMinutes' in entry) || (entry.durationMinutes is int && entry.durationMinutes >= 1 && entry.durationMinutes <= 10080))
+        && (!('mealRelation' in entry) || entry.mealRelation in ['before', 'after', 'unsure', 'not_specified'])
+        && (!('moodOrEnergy' in entry) || (entry.moodOrEnergy is string && entry.moodOrEnergy.size() >= 1 && entry.moodOrEnergy.size() <= 40))
+        && (!('note' in entry) || (entry.note is string && entry.note.size() >= 1 && entry.note.size() <= 500));
+    }
+
+    function isValidDevice(deviceId) {
+      let device = request.resource.data;
+      return device.keys().hasOnly([
+          'fcmToken', 'platform', 'permission', 'userAgentSummary', 'enabled',
+          'createdAt', 'updatedAt', 'lastSeenAt'
+        ])
+        && deviceId.matches('^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$')
+        && device.fcmToken is string && device.fcmToken.size() >= 20 && device.fcmToken.size() <= 4096
+        && deviceId != device.fcmToken
+        && device.platform == 'web' && device.permission == 'granted'
+        && device.enabled is bool
+        && device.createdAt is timestamp && device.updatedAt is timestamp && device.lastSeenAt is timestamp
+        && (!('userAgentSummary' in device)
+          || (device.userAgentSummary is string && device.userAgentSummary.size() >= 1 && device.userAgentSummary.size() <= 160));
+    }
+
+    function isValidReminderPreferences() {
+      let preferences = request.resource.data;
+      return preferences.keys().hasOnly([
+          'enabled', 'hydrationEnabled', 'mealsEnabled', 'sleepEnabled',
+          'quietHoursEnabled', 'quietStartLocalTime', 'quietEndLocalTime',
+          'createdAt', 'updatedAt'
+        ])
+        && preferences.enabled is bool
+        && preferences.hydrationEnabled is bool
+        && preferences.mealsEnabled is bool
+        && preferences.sleepEnabled is bool
+        && preferences.quietHoursEnabled is bool
+        && isTime(preferences.quietStartLocalTime)
+        && isTime(preferences.quietEndLocalTime)
+        && preferences.createdAt is timestamp && preferences.updatedAt is timestamp;
+    }
+  }
+}
