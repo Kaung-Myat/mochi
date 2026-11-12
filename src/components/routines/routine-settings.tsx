@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { type MouseEvent, type ReactNode, useEffect, useMemo, useState } from "react";
 import { useAuthState } from "@/components/auth/auth-provider";
+import { useGameFeedback } from "@/components/game/game-feedback-provider";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
 import {
   removeRoutine,
   saveRoutine,
@@ -20,24 +22,15 @@ import {
 } from "@/lib/routines/schema";
 import { sleepDurationMinutes } from "@/lib/routines/date";
 
-function Status({ error, syncing }: { error: string | null; syncing: boolean }) {
-  if (error)
-    return (
-      <p className="text-sm text-red-800" role="alert">
-        {error}
-      </p>
-    );
-  if (syncing)
-    return (
-      <p className="text-sm text-amber-800" role="status">
-        ပြောင်းလဲထားတာတွေကို သိမ်းနေတယ်…
-      </p>
-    );
-  return null;
-}
+type SheetState =
+  | { type: "water" }
+  | { type: "sleep" }
+  | { type: "meal"; meal: MealRoutine | null }
+  | null;
 
 export function RoutineSettings() {
   const { user } = useAuthState();
+  const { play } = useGameFeedback();
   const [routines, setRoutines] = useState<Routine[]>([]);
   const [hydration, setHydration] = useState(defaultHydrationRoutine);
   const [sleep, setSleep] = useState(defaultSleepRoutine);
@@ -45,6 +38,7 @@ export function RoutineSettings() {
   const [syncing, setSyncing] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [sheet, setSheet] = useState<SheetState>(null);
 
   const meals = useMemo(
     () =>
@@ -80,11 +74,12 @@ export function RoutineSettings() {
     );
   }, [user]);
 
-  async function perform(label: string, action: () => Promise<void>) {
+  async function perform(label: string, action: () => Promise<void>, feedback: "success" | "soft" = "success") {
     setBusy(label);
     setError(null);
     try {
       await action();
+      play(feedback);
     } catch (actionError) {
       console.error("Routine update failed", actionError);
       setError("ဒီပြောင်းလဲမှုကို မသိမ်းနိုင်သေးဘူး။ ထပ်စမ်းကြည့်ပေးနော်။");
@@ -93,27 +88,31 @@ export function RoutineSettings() {
     }
   }
 
-  if (loading)
+  if (loading) {
     return (
-      <p className="mt-8 text-stone-600" role="status">
-        နေ့စဉ်အစီအစဉ်တွေကို ဖွင့်နေတယ်…
+      <p className="mt-6 text-center text-sm text-stone-600" role="status">
+        Mission board ဖွင့်နေတယ်…
       </p>
     );
+  }
   if (!user) return null;
 
   const hasSavedRoutines = routines.length > 0;
   const sleepMinutes = sleepDurationMinutes(sleep.bedtimeLocalTime, sleep.wakeLocalTime);
+  const editingMeal = sheet?.type === "meal" ? sheet.meal : null;
 
   return (
-    <div className="mt-8 grid gap-6">
+    <div className="mt-4 grid gap-3">
       {!hasSavedRoutines && (
-        <section className="rounded-3xl bg-[#f4dfd4] p-6">
-          <h2 className="text-xl font-semibold">နူးညံ့တဲ့ နမူနာအစီအစဉ်လေးတွေနဲ့ စမယ်</h2>
-          <p className="mt-2 leading-6 text-stone-700">
-            အားလုံးကို မင်းစိတ်ကြိုက်ပြင်နိုင်ပါတယ်။ ဒါတွေဟာ ကျန်းမာရေးအကြံပြုချက် မဟုတ်ပါဘူးနော်။
+        <section className="rounded-[1.5rem] border-[3px] border-dashed border-white bg-[#ffe8d8] px-4 py-4 shadow-[0_5px_0_#f0c9a8]">
+          <p className="text-[0.62rem] font-bold tracking-[0.14em] text-[#c45a3c]">START HERE</p>
+          <h2 className="mt-0.5 text-lg font-semibold text-[#3a2a24]">နမူနာ Mission တွေနဲ့ စမယ်</h2>
+          <p className="mt-1 text-[0.78rem] text-[#6b5548]">
+            ရေ · စား · အိပ် — ပြင်ချင်ရင် နောက်မှ sheet ထဲမှာ ပြင်လို့ရတယ်။
           </p>
           <button
-            className="mt-5 min-h-11 rounded-full bg-stone-900 px-5 text-white disabled:opacity-50"
+            type="button"
+            className="mt-3 min-h-11 w-full rounded-full bg-[#3a2a24] text-sm font-semibold text-white shadow-[0_4px_0_#1f1612] disabled:opacity-50 active:translate-y-0.5 active:shadow-none"
             disabled={busy !== null}
             onClick={() =>
               perform("defaults", () =>
@@ -125,171 +124,468 @@ export function RoutineSettings() {
               )
             }
           >
-            {busy === "defaults" ? "သိမ်းနေတယ်…" : "နမူနာအစီအစဉ်တွေ သုံးမယ်"}
+            {busy === "defaults" ? "သိမ်းနေတယ်…" : "နမူနာ Mission သုံးမယ်"}
           </button>
         </section>
       )}
 
-      <Status error={error} syncing={syncing} />
-
-      <section className="rounded-3xl border border-stone-200 bg-white/70 p-5">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <p className="text-sm text-stone-500">ရေသောက်ခြင်း</p>
-            <h2 className="text-2xl font-semibold">ရေသောက်ချိန်အစီအစဉ်</h2>
-          </div>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={hydration.enabled}
-              onChange={(event) => setHydration({ ...hydration, enabled: event.target.checked })}
-            />{" "}
-            ဖွင့်ထားမယ်
-          </label>
-        </div>
-        <div className="mt-5 grid grid-cols-2 gap-4">
-          <NumberField
-            label="တစ်နေ့ ခွက်ရေ"
-            value={hydration.dailyTargetGlasses}
-            min={1}
-            max={30}
-            onChange={(value) => setHydration({ ...hydration, dailyTargetGlasses: value })}
-          />
-          <NumberField
-            label="တစ်ခွက် (ml)"
-            value={hydration.millilitersPerGlass}
-            min={50}
-            max={2000}
-            step={50}
-            onChange={(value) => setHydration({ ...hydration, millilitersPerGlass: value })}
-          />
-          <TimeField
-            label="စမယ့်အချိန်"
-            value={hydration.startLocalTime}
-            onChange={(value) => setHydration({ ...hydration, startLocalTime: value })}
-          />
-          <TimeField
-            label="ပြီးမယ့်အချိန်"
-            value={hydration.endLocalTime}
-            onChange={(value) => setHydration({ ...hydration, endLocalTime: value })}
-          />
-          <NumberField
-            label="ဘယ်နှမိနစ်ခြား"
-            value={hydration.intervalMinutes}
-            min={30}
-            max={480}
-            step={30}
-            onChange={(value) => setHydration({ ...hydration, intervalMinutes: value })}
-          />
-        </div>
-        <p className="mt-3 text-sm text-stone-500">
-          မင်းအတွက် အဆင်ပြေမယ့်ပမာဏကိုပဲ ရွေးနော်။ Mochi က သောက်ရမယ့်ရေပမာဏကို ဆေးဘက်ဆိုင်ရာအနေနဲ့
-          သတ်မှတ်ပေးတာ မဟုတ်ပါဘူး။
+      {(error || syncing) && (
+        <p
+          className={`rounded-2xl px-3 py-2 text-sm ${error ? "bg-red-100 text-red-900" : "bg-amber-100 text-amber-950"}`}
+          role={error ? "alert" : "status"}
+        >
+          {error ?? "ပြောင်းလဲထားတာတွေကို သိမ်းနေတယ်…"}
         </p>
-        <SaveButton
-          busy={busy === "hydration"}
-          onClick={() => perform("hydration", () => saveRoutine(user.uid, hydration))}
-        />
-      </section>
+      )}
 
-      <section className="rounded-3xl border border-stone-200 bg-white/70 p-5">
-        <div className="flex items-end justify-between gap-4">
+      <QuestCard
+        eyebrow="WATER QUEST"
+        title="ရေသောက်ခြင်း"
+        tone="water"
+        enabled={hydration.enabled}
+        lines={[
+          `${hydration.dailyTargetGlasses} ခွက် · ${hydration.millilitersPerGlass} ml`,
+          `${hydration.startLocalTime}–${hydration.endLocalTime} · ${hydration.intervalMinutes} မိနစ်ခြား`,
+        ]}
+        onClick={() => {
+          play("tap");
+          setSheet({ type: "water" });
+        }}
+      />
+
+      <section className="rounded-[1.5rem] border-[3px] border-white bg-white/90 p-3 shadow-[0_5px_0_#f0c9a8]">
+        <div className="flex items-center justify-between gap-2">
           <div>
-            <p className="text-sm text-stone-500">အစားအစာ</p>
-            <h2 className="text-2xl font-semibold">စားချိန်အစီအစဉ်</h2>
+            <p className="text-[0.62rem] font-bold tracking-[0.14em] text-[#c45a3c]">MEAL QUESTS</p>
+            <h2 className="text-base font-semibold text-[#3a2a24]">စားချိန်</h2>
           </div>
           <button
-            className="min-h-11 rounded-full border border-stone-400 px-4"
+            type="button"
+            className="min-h-10 rounded-full border-2 border-[#3a2a24] bg-[#ffd15c] px-3 text-[0.72rem] font-semibold text-[#3a2a24] shadow-[0_2px_0_#e2b000] active:translate-y-0.5 active:shadow-none"
             onClick={() => {
-              const next: MealRoutine = {
-                id: `meal-${crypto.randomUUID()}`,
+              play("tap");
+              setSheet({
                 type: "meal",
-                label: "အစားအစာ",
-                enabled: true,
-                localTime: "12:00",
-                sortOrder: meals.length,
-              };
-              void perform(next.id, () => saveRoutine(user.uid, next));
+                meal: {
+                  id: `meal-${crypto.randomUUID()}`,
+                  type: "meal",
+                  label: "အစားအစာ",
+                  enabled: true,
+                  localTime: "12:00",
+                  sortOrder: meals.length,
+                },
+              });
             }}
           >
-            စားချိန်ထည့်မယ်
+            + ထည့်မယ်
           </button>
         </div>
-        <div className="mt-5 grid gap-4">
-          {meals.length === 0 && (
-            <p className="text-stone-600">
-              စားချိန် မထည့်ရသေးပါဘူး။ မင်းမြင်ချင်တဲ့ စားချိန်တွေကိုပဲ ထည့်လို့ရပါတယ်။
-            </p>
-          )}
-          {meals.map((meal, index) => (
-            <MealEditor
-              key={`${meal.id}-${meal.label}-${meal.localTime}-${meal.sortOrder}-${meal.enabled}`}
-              meal={meal}
-              busy={busy === meal.id}
-              first={index === 0}
-              last={index === meals.length - 1}
-              onSave={(value) => perform(value.id, () => saveRoutine(user.uid, value))}
-              onDelete={() => perform(meal.id, () => removeRoutine(user.uid, meal.id))}
-              onMove={(direction) => {
-                const other = meals[index + direction];
-                if (!other) return;
-                void perform(meal.id, () =>
-                  saveRoutines(user.uid, [
-                    { ...meal, sortOrder: other.sortOrder },
-                    { ...other, sortOrder: meal.sortOrder },
-                  ]),
-                );
-              }}
-            />
-          ))}
-        </div>
+
+        {meals.length === 0 ? (
+          <p className="mt-3 rounded-2xl bg-[#fffaf3] px-3 py-4 text-center text-sm text-stone-600">
+            စားချိန် မရှိသေးဘူး။ ထည့်ချင်ရင် + ကို နှိပ်နော်။
+          </p>
+        ) : (
+          <div className="mt-2.5 grid gap-2">
+            {meals.map((meal, index) => (
+              <button
+                key={meal.id}
+                type="button"
+                onClick={() => {
+                  play("tap");
+                  setSheet({ type: "meal", meal });
+                }}
+                className="flex min-h-12 items-center justify-between gap-3 rounded-2xl border-2 border-[#f0d2bc] bg-[#fffaf3] px-3 text-left active:scale-[0.99]"
+              >
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-semibold text-[#3a2a24]">
+                    {localizedRoutineLabel(meal.label)}
+                  </span>
+                  <span className="block text-[0.68rem] text-stone-500">
+                    {meal.localTime}
+                    {meal.enabled ? "" : " · ပိတ်ထား"}
+                  </span>
+                </span>
+                <span className="flex items-center gap-1">
+                  <IconButton
+                    label="အပေါ်ရွှေ့"
+                    disabled={index === 0 || busy !== null}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      const other = meals[index - 1];
+                      if (!other) return;
+                      void perform(
+                        meal.id,
+                        () =>
+                          saveRoutines(user.uid, [
+                            { ...meal, sortOrder: other.sortOrder },
+                            { ...other, sortOrder: meal.sortOrder },
+                          ]),
+                        "soft",
+                      );
+                    }}
+                  >
+                    ↑
+                  </IconButton>
+                  <IconButton
+                    label="အောက်ရွှေ့"
+                    disabled={index === meals.length - 1 || busy !== null}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      const other = meals[index + 1];
+                      if (!other) return;
+                      void perform(
+                        meal.id,
+                        () =>
+                          saveRoutines(user.uid, [
+                            { ...meal, sortOrder: other.sortOrder },
+                            { ...other, sortOrder: meal.sortOrder },
+                          ]),
+                        "soft",
+                      );
+                    }}
+                  >
+                    ↓
+                  </IconButton>
+                  <span className="text-[#c45a3c]" aria-hidden="true">
+                    ›
+                  </span>
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
       </section>
 
-      <section className="rounded-3xl border border-stone-200 bg-white/70 p-5">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <p className="text-sm text-stone-500">အိပ်စက်ချိန်</p>
-            <h2 className="text-2xl font-semibold">အိပ်ချိန်အစီအစဉ်</h2>
-          </div>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={sleep.enabled}
-              onChange={(event) => setSleep({ ...sleep, enabled: event.target.checked })}
-            />{" "}
-            ဖွင့်ထားမယ်
-          </label>
-        </div>
-        <div className="mt-5 grid grid-cols-2 gap-4">
-          <TimeField
-            label="အိပ်ရာဝင်ချိန်"
-            value={sleep.bedtimeLocalTime}
-            onChange={(value) => setSleep({ ...sleep, bedtimeLocalTime: value })}
-          />
-          <TimeField
-            label="နိုးမယ့်အချိန်"
-            value={sleep.wakeLocalTime}
-            onChange={(value) => setSleep({ ...sleep, wakeLocalTime: value })}
-          />
-          <NumberField
-            label="အိပ်ရာဝင်ဖို့ ပြင်ဆင်ချိန် (မိနစ်)"
-            value={sleep.windDownMinutes}
-            min={0}
-            max={180}
-            step={5}
-            onChange={(value) => setSleep({ ...sleep, windDownMinutes: value })}
-          />
-        </div>
-        <p className="mt-3 text-sm text-stone-500">
-          စီစဉ်ထားတဲ့ကြာချိန်—{Math.floor(sleepMinutes / 60)} နာရီ {sleepMinutes % 60} မိနစ်။ ဒါဟာ
-          အိပ်ချိန်အစီအစဉ်သာဖြစ်ပြီး တကယ်အိပ်ပျော်ချိန်ကို တိုင်းတာထားတာ မဟုတ်ပါဘူး။
-        </p>
-        <SaveButton
-          busy={busy === "sleep"}
-          onClick={() => perform("sleep", () => saveRoutine(user.uid, sleep))}
+      <QuestCard
+        eyebrow="SLEEP QUEST"
+        title="အိပ်ချိန်"
+        tone="sleep"
+        enabled={sleep.enabled}
+        lines={[
+          `${sleep.bedtimeLocalTime} → ${sleep.wakeLocalTime}`,
+          `${Math.floor(sleepMinutes / 60)} နာရီ ${sleepMinutes % 60} မိနစ် · ပြင်ဆင် ${sleep.windDownMinutes} မိနစ်`,
+        ]}
+        onClick={() => {
+          play("tap");
+          setSheet({ type: "sleep" });
+        }}
+      />
+
+      <BottomSheet
+        open={sheet?.type === "water"}
+        title="ရေ Quest ပြင်မယ်"
+        closeLabel="ပိတ်မယ်"
+        onClose={() => setSheet(null)}
+      >
+        <WaterSheet
+          initial={hydration}
+          busy={busy === "hydration"}
+          onSave={(value) =>
+            perform("hydration", async () => {
+              await saveRoutine(user.uid, value);
+              setHydration(value);
+              setSheet(null);
+            })
+          }
         />
-      </section>
+      </BottomSheet>
+
+      <BottomSheet
+        open={sheet?.type === "sleep"}
+        title="အိပ်ချိန် Quest ပြင်မယ်"
+        closeLabel="ပိတ်မယ်"
+        onClose={() => setSheet(null)}
+      >
+        <SleepSheet
+          initial={sleep}
+          busy={busy === "sleep"}
+          onSave={(value) =>
+            perform("sleep", async () => {
+              await saveRoutine(user.uid, value);
+              setSleep(value);
+              setSheet(null);
+            })
+          }
+        />
+      </BottomSheet>
+
+      <BottomSheet
+        open={sheet?.type === "meal"}
+        title={editingMeal && routines.some((r) => r.id === editingMeal.id) ? "စားချိန် ပြင်မယ်" : "စားချိန် အသစ်"}
+        closeLabel="ပိတ်မယ်"
+        onClose={() => setSheet(null)}
+      >
+        {editingMeal && (
+          <MealSheet
+            meal={editingMeal}
+            busy={busy === editingMeal.id}
+            isNew={!routines.some((routine) => routine.id === editingMeal.id)}
+            onSave={(value) =>
+              perform(value.id, async () => {
+                await saveRoutine(user.uid, value);
+                setSheet(null);
+              })
+            }
+            onDelete={() =>
+              perform(
+                editingMeal.id,
+                async () => {
+                  await removeRoutine(user.uid, editingMeal.id);
+                  setSheet(null);
+                },
+                "soft",
+              )
+            }
+          />
+        )}
+      </BottomSheet>
     </div>
+  );
+}
+
+function QuestCard({
+  eyebrow,
+  title,
+  lines,
+  enabled,
+  tone,
+  onClick,
+}: {
+  eyebrow: string;
+  title: string;
+  lines: string[];
+  enabled: boolean;
+  tone: "water" | "sleep";
+  onClick: () => void;
+}) {
+  const accent = tone === "water" ? "bg-[#7ec8f8]" : "bg-[#b8a0ff]";
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex w-full items-center gap-3 rounded-[1.5rem] border-[3px] border-white bg-white/90 p-3 text-left shadow-[0_5px_0_#f0c9a8] active:translate-y-0.5 active:shadow-[0_3px_0_#f0c9a8]"
+    >
+      <span className={`grid size-12 shrink-0 place-items-center rounded-2xl ${accent} text-white shadow-[0_3px_0_rgb(0_0_0_/_.15)]`}>
+        {tone === "water" ? <CupIcon /> : <MoonIcon />}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-[0.62rem] font-bold tracking-[0.14em] text-[#c45a3c]">
+          {eyebrow}
+        </span>
+        <span className="block text-base font-semibold text-[#3a2a24]">
+          {title}
+          {!enabled && <span className="ml-2 text-[0.68rem] font-medium text-stone-500">ပိတ်</span>}
+        </span>
+        {lines.map((line) => (
+          <span key={line} className="block truncate text-[0.72rem] text-stone-500">
+            {line}
+          </span>
+        ))}
+      </span>
+      <span className="text-[#c45a3c]" aria-hidden="true">
+        ›
+      </span>
+    </button>
+  );
+}
+
+function WaterSheet({
+  initial,
+  busy,
+  onSave,
+}: {
+  initial: HydrationRoutine;
+  busy: boolean;
+  onSave: (value: HydrationRoutine) => void;
+}) {
+  const [draft, setDraft] = useState(initial);
+  useEffect(() => {
+    setDraft(initial);
+  }, [initial]);
+
+  return (
+    <div className="grid gap-3 py-1">
+      <EnableToggle
+        checked={draft.enabled}
+        onChange={(enabled) => setDraft({ ...draft, enabled })}
+        label="ဒီ Quest ကို ဖွင့်ထားမယ်"
+      />
+      <div className="grid grid-cols-2 gap-2.5">
+        <NumberField
+          label="တစ်နေ့ ခွက်ရေ"
+          value={draft.dailyTargetGlasses}
+          min={1}
+          max={30}
+          onChange={(value) => setDraft({ ...draft, dailyTargetGlasses: value })}
+        />
+        <NumberField
+          label="တစ်ခွက် (ml)"
+          value={draft.millilitersPerGlass}
+          min={50}
+          max={2000}
+          step={50}
+          onChange={(value) => setDraft({ ...draft, millilitersPerGlass: value })}
+        />
+        <TimeField
+          label="စမယ့်အချိန်"
+          value={draft.startLocalTime}
+          onChange={(value) => setDraft({ ...draft, startLocalTime: value })}
+        />
+        <TimeField
+          label="ပြီးမယ့်အချိန်"
+          value={draft.endLocalTime}
+          onChange={(value) => setDraft({ ...draft, endLocalTime: value })}
+        />
+      </div>
+      <NumberField
+        label="ဘယ်နှမိနစ်ခြား သတိပေးမလဲ"
+        value={draft.intervalMinutes}
+        min={30}
+        max={480}
+        step={30}
+        onChange={(value) => setDraft({ ...draft, intervalMinutes: value })}
+      />
+      <p className="text-[0.72rem] text-stone-500">
+        Mochi က ဆေးဘက်ဆိုင်ရာ ရေပမာဏ မသတ်မှတ်ပါဘူး — မင်းအဆင်ပြေတဲ့ ပမာဏပဲ ရွေးနော်။
+      </p>
+      <SaveButton busy={busy} onClick={() => onSave(draft)} />
+    </div>
+  );
+}
+
+function SleepSheet({
+  initial,
+  busy,
+  onSave,
+}: {
+  initial: SleepRoutine;
+  busy: boolean;
+  onSave: (value: SleepRoutine) => void;
+}) {
+  const [draft, setDraft] = useState(initial);
+  useEffect(() => {
+    setDraft(initial);
+  }, [initial]);
+  const minutes = sleepDurationMinutes(draft.bedtimeLocalTime, draft.wakeLocalTime);
+
+  return (
+    <div className="grid gap-3 py-1">
+      <EnableToggle
+        checked={draft.enabled}
+        onChange={(enabled) => setDraft({ ...draft, enabled })}
+        label="ဒီ Quest ကို ဖွင့်ထားမယ်"
+      />
+      <div className="grid grid-cols-2 gap-2.5">
+        <TimeField
+          label="အိပ်ရာဝင်ချိန်"
+          value={draft.bedtimeLocalTime}
+          onChange={(value) => setDraft({ ...draft, bedtimeLocalTime: value })}
+        />
+        <TimeField
+          label="နိုးမယ့်အချိန်"
+          value={draft.wakeLocalTime}
+          onChange={(value) => setDraft({ ...draft, wakeLocalTime: value })}
+        />
+      </div>
+      <NumberField
+        label="ပြင်ဆင်ချိန် (မိနစ်)"
+        value={draft.windDownMinutes}
+        min={0}
+        max={180}
+        step={5}
+        onChange={(value) => setDraft({ ...draft, windDownMinutes: value })}
+      />
+      <p className="rounded-2xl bg-[#fffaf3] px-3 py-2 text-[0.78rem] text-stone-600">
+        စီစဉ်ထားတဲ့ကြာချိန် — {Math.floor(minutes / 60)} နာရီ {minutes % 60} မိနစ်
+      </p>
+      <SaveButton busy={busy} onClick={() => onSave(draft)} />
+    </div>
+  );
+}
+
+function MealSheet({
+  meal,
+  busy,
+  isNew,
+  onSave,
+  onDelete,
+}: {
+  meal: MealRoutine;
+  busy: boolean;
+  isNew: boolean;
+  onSave: (meal: MealRoutine) => void;
+  onDelete: () => void;
+}) {
+  const [draft, setDraft] = useState({ ...meal, label: localizedRoutineLabel(meal.label) });
+
+  useEffect(() => {
+    setDraft({ ...meal, label: localizedRoutineLabel(meal.label) });
+  }, [meal]);
+
+  return (
+    <div className="grid gap-3 py-1">
+      <label className="grid gap-1.5">
+        <span className="text-[0.78rem] font-semibold text-[#3a2a24]">အမည်</span>
+        <input
+          className="mission-input min-h-11 rounded-2xl border-2 border-[#f0d2bc] bg-white px-3"
+          maxLength={40}
+          value={draft.label}
+          onChange={(event) => setDraft({ ...draft, label: event.target.value })}
+        />
+      </label>
+      <TimeField
+        label="အချိန်"
+        value={draft.localTime}
+        onChange={(value) => setDraft({ ...draft, localTime: value })}
+      />
+      <EnableToggle
+        checked={draft.enabled}
+        onChange={(enabled) => setDraft({ ...draft, enabled })}
+        label="ဒီစားချိန်ကို ပြမယ်"
+      />
+      <SaveButton
+        busy={busy}
+        disabled={!draft.label.trim()}
+        onClick={() => onSave({ ...draft, label: draft.label.trim() })}
+      />
+      {!isNew && (
+        <button
+          type="button"
+          className="min-h-11 rounded-full border-2 border-red-200 bg-red-50 text-sm font-semibold text-red-800 disabled:opacity-50"
+          disabled={busy}
+          onClick={onDelete}
+        >
+          ဖျက်မယ်
+        </button>
+      )}
+    </div>
+  );
+}
+
+function EnableToggle({
+  checked,
+  onChange,
+  label,
+}: {
+  checked: boolean;
+  onChange: (value: boolean) => void;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={checked}
+      onClick={() => onChange(!checked)}
+      className={`flex min-h-11 w-full items-center justify-between rounded-2xl border-2 px-3 text-left text-sm font-semibold ${
+        checked
+          ? "border-[#3a2a24] bg-[#ffd15c] text-[#3a2a24]"
+          : "border-[#f0d2bc] bg-white text-[#6b5548]"
+      }`}
+    >
+      <span>{label}</span>
+      <span className="text-[0.72rem]">{checked ? "ON" : "OFF"}</span>
+    </button>
   );
 }
 
@@ -309,10 +605,10 @@ function NumberField({
   onChange: (value: number) => void;
 }) {
   return (
-    <label className="grid gap-2 text-sm">
+    <label className="grid gap-1.5 text-[0.78rem] font-semibold text-[#3a2a24]">
       {label}
       <input
-        className="min-h-11 rounded-xl border border-stone-300 bg-white px-3"
+        className="mission-input min-h-11 rounded-2xl border-2 border-[#f0d2bc] bg-white px-3 text-sm font-medium"
         type="number"
         value={value}
         min={min}
@@ -334,10 +630,10 @@ function TimeField({
   onChange: (value: string) => void;
 }) {
   return (
-    <label className="grid gap-2 text-sm">
+    <label className="grid gap-1.5 text-[0.78rem] font-semibold text-[#3a2a24]">
       {label}
       <input
-        className="min-h-11 rounded-xl border border-stone-300 bg-white px-3"
+        className="mission-input min-h-11 rounded-2xl border-2 border-[#f0d2bc] bg-white px-3 text-sm font-medium"
         type="time"
         value={value}
         required
@@ -347,90 +643,63 @@ function TimeField({
   );
 }
 
-function SaveButton({ busy, onClick }: { busy: boolean; onClick: () => void }) {
+function SaveButton({
+  busy,
+  onClick,
+  disabled = false,
+}: {
+  busy: boolean;
+  onClick: () => void;
+  disabled?: boolean;
+}) {
   return (
     <button
-      className="mt-5 min-h-11 rounded-full bg-stone-900 px-5 text-white disabled:opacity-50"
-      disabled={busy}
+      type="button"
+      className="min-h-11 rounded-full bg-[#3a2a24] px-5 text-sm font-semibold text-white shadow-[0_4px_0_#1f1612] disabled:opacity-50 active:translate-y-0.5 active:shadow-none"
+      disabled={busy || disabled}
       onClick={onClick}
     >
-      {busy ? "သိမ်းနေတယ်…" : "ပြောင်းလဲမှုတွေ သိမ်းမယ်"}
+      {busy ? "သိမ်းနေတယ်…" : "သိမ်းမယ်"}
     </button>
   );
 }
 
-function MealEditor({
-  meal,
-  busy,
-  first,
-  last,
-  onSave,
-  onDelete,
-  onMove,
+function IconButton({
+  children,
+  label,
+  disabled,
+  onClick,
 }: {
-  meal: MealRoutine;
-  busy: boolean;
-  first: boolean;
-  last: boolean;
-  onSave: (meal: MealRoutine) => void;
-  onDelete: () => void;
-  onMove: (direction: -1 | 1) => void;
+  children: ReactNode;
+  label: string;
+  disabled?: boolean;
+  onClick: (event: MouseEvent<HTMLButtonElement>) => void;
 }) {
-  const [draft, setDraft] = useState({ ...meal, label: localizedRoutineLabel(meal.label) });
   return (
-    <div className="rounded-2xl border border-stone-200 p-4">
-      <div className="grid grid-cols-[1fr_8rem] gap-3">
-        <label className="grid gap-2 text-sm">
-          အမည်
-          <input
-            className="min-h-11 rounded-xl border border-stone-300 px-3"
-            maxLength={40}
-            value={draft.label}
-            onChange={(event) => setDraft({ ...draft, label: event.target.value })}
-          />
-        </label>
-        <TimeField
-          label="အချိန်"
-          value={draft.localTime}
-          onChange={(value) => setDraft({ ...draft, localTime: value })}
-        />
-      </div>
-      <label className="mt-3 flex items-center gap-2 text-sm">
-        <input
-          type="checkbox"
-          checked={draft.enabled}
-          onChange={(event) => setDraft({ ...draft, enabled: event.target.checked })}
-        />{" "}
-        ဒီစားချိန်ကို ပြမယ်
-      </label>
-      <div className="mt-4 flex flex-wrap gap-2">
-        <button
-          className="min-h-11 rounded-full bg-stone-900 px-4 text-white disabled:opacity-50"
-          disabled={busy || !draft.label.trim()}
-          onClick={() => onSave(draft)}
-        >
-          သိမ်းမယ်
-        </button>
-        <button
-          className="min-h-11 rounded-full border border-stone-300 px-4 disabled:opacity-40"
-          disabled={first || busy}
-          aria-label={`${localizedRoutineLabel(meal.label)} ကို အပေါ်ရွှေ့မယ်`}
-          onClick={() => onMove(-1)}
-        >
-          ↑
-        </button>
-        <button
-          className="min-h-11 rounded-full border border-stone-300 px-4 disabled:opacity-40"
-          disabled={last || busy}
-          aria-label={`${localizedRoutineLabel(meal.label)} ကို အောက်ရွှေ့မယ်`}
-          onClick={() => onMove(1)}
-        >
-          ↓
-        </button>
-        <button className="min-h-11 px-3 text-sm text-red-800" disabled={busy} onClick={onDelete}>
-          ဖျက်မယ်
-        </button>
-      </div>
-    </div>
+    <button
+      type="button"
+      aria-label={label}
+      disabled={disabled}
+      onClick={onClick}
+      className="grid size-8 place-items-center rounded-full border border-[#f0d2bc] bg-white text-sm font-bold text-[#3a2a24] disabled:opacity-30"
+    >
+      {children}
+    </button>
+  );
+}
+
+function CupIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.9">
+      <path d="M7 8h8v6a4 4 0 0 1-8 0zM15 10h2a2 2 0 0 1 0 4h-2M8 20h6" />
+    </svg>
+  );
+}
+
+function MoonIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-5" fill="currentColor">
+      <path d="M15 3a8 8 0 1 0 6 13 7 7 0 0 1-6-13z" />
+    </svg>
   );
 }

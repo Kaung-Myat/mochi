@@ -9,6 +9,7 @@ import {
 } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
+import { MochiMascot } from "@/components/mascot/mochi-mascot";
 import { SetupMessage } from "@/components/auth/require-auth";
 import { isFirebaseConfigured } from "@/lib/firebase/config";
 
@@ -72,70 +73,76 @@ export default function SignInPage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center px-6 py-10">
-      <p className="text-sm font-medium tracking-wide text-stone-600">MOCHI</p>
-      <h1 className="mt-3 text-4xl font-semibold">မင်းရဲ့ ကိုယ်ပိုင်နေရာလေး</h1>
-      <p className="mt-4 leading-7 text-stone-700">
-        မင်းရဲ့နေ့စဉ်အစီအစဉ်တွေကို လုံခြုံစွာသိမ်းထားပြီး စက်တိုင်းမှာ ပြန်ကြည့်နိုင်ဖို့
-        အကောင့်ဝင်ပေးပါ။
-      </p>
-      <button
-        className="mt-8 min-h-11 rounded-full bg-stone-900 px-5 py-3 text-white disabled:opacity-50"
-        type="button"
-        onClick={signInWithGoogle}
-        disabled={isPending}
-      >
-        Google နဲ့ ဆက်သွားမယ်
-      </button>
-      <div className="my-7 border-t border-stone-300" />
-      <form className="grid gap-4" onSubmit={submit}>
-        <label className="grid gap-1">
-          အီးမေးလ်
-          <input
-            className="min-h-11 rounded-lg border border-stone-400 bg-white px-3"
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            autoComplete="email"
-            required
-          />
-        </label>
-        <label className="grid gap-1">
-          စကားဝှက်
-          <input
-            className="min-h-11 rounded-lg border border-stone-400 bg-white px-3"
-            type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            autoComplete="current-password"
-            required
-          />
-        </label>
-        {error && (
-          <p className="text-sm text-red-800" role="alert">
-            {error}
-          </p>
-        )}
+    <main className="auth-game-page mx-auto flex min-h-dvh max-w-md flex-col px-5 py-6">
+      <div className="text-center">
+        <p className="text-xs font-bold tracking-[0.2em] text-rose-800/60">MOCHI &amp; YOU</p>
+        <MochiMascot className="mochi-idle mx-auto -my-2 w-48" />
+        <div className="mx-auto -mt-2 max-w-xs rounded-[1.6rem] border border-white/80 bg-white/70 px-5 py-3 shadow-[0_16px_40px_rgba(80,45,40,0.1)] backdrop-blur">
+          <h1 className="text-2xl font-semibold">မင်းပြန်လာပြီလား</h1>
+          <p className="mt-1 text-sm text-stone-600">Mochi က ဒီမှာ စောင့်နေတာနော်။</p>
+        </div>
+      </div>
+      <div className="mt-5 rounded-[2rem] border border-white/80 bg-white/70 p-5 shadow-[0_20px_50px_rgba(80,45,40,0.11)] backdrop-blur">
         <button
-          className="min-h-11 rounded-full border border-stone-800 px-5 py-3 disabled:opacity-50"
+          className="min-h-12 w-full rounded-full bg-rose-600 px-5 py-3 font-semibold text-white shadow-lg disabled:opacity-50"
+          type="button"
+          onClick={signInWithGoogle}
           disabled={isPending}
         >
-          {isPending
-            ? "ခဏလေး စောင့်ပေးနော်…"
-            : mode === "create-account"
-              ? "အကောင့်ဖွင့်မယ်"
-              : "အကောင့်ဝင်မယ်"}
+          Google နဲ့ ဆက်သွားမယ်
         </button>
-      </form>
-      <button
-        className="mt-5 w-fit text-sm underline"
-        type="button"
-        onClick={() => setMode(mode === "sign-in" ? "create-account" : "sign-in")}
-      >
-        {mode === "sign-in" ? "အကောင့်အသစ် ဖွင့်မယ်" : "အကောင့်ရှိပြီးသားပါ"}
-      </button>
-      <p className="mt-6 text-sm leading-6 text-stone-600">
-        မင်းရဲ့ နေ့စဉ်အစီအစဉ်နဲ့ ဗိုက်အခြေအနေမှတ်စုတွေကို Mochi က ဘယ်သူ့ကိုမှ မမျှဝေပါဘူး။
+        <div className="my-5 flex items-center gap-3 text-xs text-stone-400 before:h-px before:flex-1 before:bg-rose-200 after:h-px after:flex-1 after:bg-rose-200">
+          သို့မဟုတ်
+        </div>
+        <form className="grid gap-4" onSubmit={submit}>
+          <label className="grid gap-1">
+            အီးမေးလ်
+            <input
+              className="min-h-11 rounded-2xl border border-rose-200 bg-white/80 px-4"
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              autoComplete="email"
+              required
+            />
+          </label>
+          <label className="grid gap-1">
+            စကားဝှက်
+            <input
+              className="min-h-11 rounded-2xl border border-rose-200 bg-white/80 px-4"
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              autoComplete="current-password"
+              required
+            />
+          </label>
+          {error && (
+            <p className="text-sm text-red-800" role="alert">
+              {error}
+            </p>
+          )}
+          <button
+            className="min-h-11 rounded-full border border-rose-300 bg-rose-50 px-5 py-3 font-semibold text-rose-950 disabled:opacity-50"
+            disabled={isPending}
+          >
+            {isPending
+              ? "ခဏလေး စောင့်ပေးနော်…"
+              : mode === "create-account"
+                ? "အကောင့်ဖွင့်မယ်"
+                : "အကောင့်ဝင်မယ်"}
+          </button>
+        </form>
+        <button
+          className="mt-4 w-fit text-sm font-semibold text-rose-800 underline"
+          type="button"
+          onClick={() => setMode(mode === "sign-in" ? "create-account" : "sign-in")}
+        >
+          {mode === "sign-in" ? "အကောင့်အသစ် ဖွင့်မယ်" : "အကောင့်ရှိပြီးသားပါ"}
+        </button>
+      </div>
+      <p className="mt-4 text-center text-xs text-stone-500">
+        မင်းရဲ့ diary နဲ့ နေ့စဉ်အစီအစဉ်တွေကို Mochi က ဘယ်သူ့ကိုမှ မပြောပါဘူး။
       </p>
     </main>
   );

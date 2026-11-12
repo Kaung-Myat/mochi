@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useAuthState } from "./auth-provider";
+import { MochiMascot } from "@/components/mascot/mochi-mascot";
 
 export function RequireAuth({ children }: Readonly<{ children: React.ReactNode }>) {
   const router = useRouter();
@@ -18,8 +19,12 @@ export function RequireAuth({ children }: Readonly<{ children: React.ReactNode }
 
   if (status === "loading" || !user) {
     return (
-      <main className="mx-auto max-w-md px-6 py-12" aria-busy="true">
-        မင်းရဲ့ ကိုယ်ပိုင်နေရာလေးကို စစ်ဆေးနေတယ်…
+      <main
+        className="auth-game-page mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center px-6 py-12 text-center"
+        aria-busy="true"
+      >
+        <MochiMascot className="mochi-idle w-40" />
+        <p className="mt-3 font-semibold">Mochi နိုးလာနေတယ်…</p>
       </main>
     );
   }

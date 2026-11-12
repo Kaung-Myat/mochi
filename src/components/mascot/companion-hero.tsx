@@ -1,0 +1,181 @@
+"use client";
+
+import Link from "next/link";
+import { useState } from "react";
+import { useGameFeedback } from "@/components/game/game-feedback-provider";
+import { MochiMascot } from "./mochi-mascot";
+
+const loveNotes = [
+  "မင်းလာတာနဲ့ Mochi ရဲ့နေ့လေး ပိုလှသွားပြီ။",
+  "ဒီနေ့လည်း မင်းဘေးမှာ တိတ်တိတ်လေး အားပေးနေမယ်နော်။",
+  "အလျင်မလိုဘူးနော်။ တစ်ခုပြီးတစ်ခု အတူလုပ်ကြမယ်။",
+  "မင်းပျော်နေရင် Mochi လည်း ပျော်တယ်။",
+  "နည်းနည်းပင်ပန်းရင် Mochi ကို ထပ်ပွတ်ပေးနော်။",
+];
+
+export type CompanionAction = {
+  id: "water" | "meals" | "sleep" | "tummy";
+  label: string;
+  caption: string;
+  badge?: string;
+  active?: boolean;
+  href?: string;
+  onClick?: () => void;
+};
+
+export function CompanionHero({
+  greeting,
+  name,
+  nextUp,
+  actions,
+}: {
+  greeting: string;
+  name?: string;
+  nextUp: string;
+  actions: CompanionAction[];
+}) {
+  const { play } = useGameFeedback();
+  const [noteIndex, setNoteIndex] = useState(0);
+  const [petted, setPetted] = useState(false);
+
+  function petMochi() {
+    setNoteIndex((value) => (value + 1) % loveNotes.length);
+    setPetted(true);
+    window.setTimeout(() => setPetted(false), 650);
+    play("pet");
+  }
+
+  return (
+    <section className="companion-stage relative isolate overflow-hidden pt-[max(0.5rem,env(safe-area-inset-top))]">
+      <div className="companion-plant" aria-hidden="true" />
+      <div
+        className="companion-poster absolute top-[22%] right-[18%] h-14 w-10 rotate-3 rounded-md border-[3px] border-[#fff7ee] bg-[#7ed957] shadow-md sm:h-16 sm:w-12"
+        aria-hidden="true"
+      />
+
+      <p className="absolute top-[max(0.45rem,env(safe-area-inset-top))] left-1/2 z-20 w-[min(70vw,14rem)] -translate-x-1/2 text-center text-[0.7rem] font-bold text-white drop-shadow">
+        Today with Mochi
+      </p>
+
+      <ActionColumn actions={actions.filter((_, index) => index % 2 === 0)} side="left" />
+      <ActionColumn actions={actions.filter((_, index) => index % 2 === 1)} side="right" />
+
+      <div className="companion-bubble absolute top-[max(2.8rem,calc(env(safe-area-inset-top)+2.2rem))] left-1/2 z-20 w-[min(58vw,13rem)] -translate-x-1/2 rounded-2xl border-[3px] border-white bg-white/95 px-2.5 py-1.5 text-center text-[0.78rem] font-medium text-[#3a2a24] shadow-[0_5px_0_rgb(90,40,30)]">
+        {loveNotes[noteIndex]}
+        <span className="mt-0.5 block text-[0.68rem] font-semibold text-[#8a5a32]">
+          {greeting}
+          {name ? `၊ ${name}` : ""}
+        </span>
+        <span className="mt-0.5 block truncate text-[0.65rem] text-stone-500">{nextUp}</span>
+      </div>
+
+      <button
+        type="button"
+        onClick={petMochi}
+        aria-label="Pet Mochi"
+        className="companion-mascot-slot absolute inset-x-0 z-10 flex touch-manipulation items-end justify-center"
+      >
+        <span
+          className={`pointer-events-none absolute top-4 text-rose-500 ${petted ? "love-burst" : "opacity-0"}`}
+          aria-hidden="true"
+        >
+          ♥
+        </span>
+        <MochiMascot
+          className={`companion-mascot origin-bottom ${petted ? "mochi-petted" : "mochi-idle"}`}
+        />
+      </button>
+    </section>
+  );
+}
+
+function ActionColumn({ actions, side }: { actions: CompanionAction[]; side: "left" | "right" }) {
+  if (actions.length === 0) return null;
+  return (
+    <div
+      className={`companion-actions absolute top-[max(3.6rem,calc(env(safe-area-inset-top)+3rem))] z-20 flex flex-col gap-2.5 ${side === "left" ? "left-2.5" : "right-2.5"}`}
+    >
+      {actions.map((action) => (
+        <ActionButton key={action.id} action={action} />
+      ))}
+    </div>
+  );
+}
+
+function ActionButton({ action }: { action: CompanionAction }) {
+  const { play } = useGameFeedback();
+  const className = `toy-button ${action.active ? "toy-button-active" : ""}`;
+  const content = (
+    <>
+      <ActionIcon id={action.id} />
+      {action.badge && <span className="toy-badge">{action.badge}</span>}
+    </>
+  );
+
+  function handleActivate() {
+    play("tap");
+    action.onClick?.();
+  }
+
+  return (
+    <div className="flex flex-col items-center">
+      {action.href ? (
+        <Link
+          href={action.href}
+          aria-label={action.label}
+          className={className}
+          onClick={() => play("tap")}
+        >
+          {content}
+        </Link>
+      ) : (
+        <button
+          type="button"
+          aria-pressed={action.active}
+          aria-label={action.label}
+          onClick={handleActivate}
+          className={className}
+        >
+          {content}
+        </button>
+      )}
+      <span className="toy-caption">{action.caption}</span>
+    </div>
+  );
+}
+
+function ActionIcon({ id }: { id: CompanionAction["id"] }) {
+  if (id === "water") return <CupIcon />;
+  if (id === "meals") return <ForkIcon />;
+  if (id === "sleep") return <MoonIcon />;
+  return <BookIcon />;
+}
+
+function CupIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M7 8h8v6a4 4 0 0 1-8 0zM15 10h2a2 2 0 0 1 0 4h-2M8 20h6" />
+    </svg>
+  );
+}
+function ForkIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M8 4v7M12 4v7M10 11v9M16 4c1.5 2 2 4 2 6s-1 3-2 3v7" />
+    </svg>
+  );
+}
+function MoonIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-5" fill="currentColor">
+      <path d="M15 3a8 8 0 1 0 6 13 7 7 0 0 1-6-13z" />
+    </svg>
+  );
+}
+function BookIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M6 5h10a2 2 0 0 1 2 2v12H8a2 2 0 0 0-2 2zM6 5v14" />
+    </svg>
+  );
+}

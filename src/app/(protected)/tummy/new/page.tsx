@@ -1,11 +1,13 @@
+import { DiaryEditorHeader } from "@/components/layout/diary-editor-header";
 import { TummyEntryForm } from "@/components/tummy/tummy-entry-form";
 
 export default function NewTummyEntryPage() {
   return (
-    <main className="mx-auto min-h-dvh max-w-md px-5 py-10">
-      <p className="text-sm font-medium text-stone-600">ကိုယ်ပိုင်မှတ်စု</p>
-      <h1 className="mt-2 text-3xl font-semibold">ဗိုက်အခြေအနေ မှတ်မယ်</h1>
-      <TummyEntryForm />
+    <main className="diary-editor-page mx-auto flex min-h-dvh max-w-md flex-col px-4 pt-[max(0.65rem,env(safe-area-inset-top))]">
+      <DiaryEditorHeader title="မှတ်စုအသစ်" />
+      <div className="mt-3 flex min-h-0 flex-1 flex-col">
+        <TummyEntryForm />
+      </div>
     </main>
   );
 }

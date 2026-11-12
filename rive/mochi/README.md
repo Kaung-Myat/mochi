@@ -1,14 +1,14 @@
 # Mochi Rive source
 
-This is the editable source for Mochi's mascot. It has one 320 by 320 `Mochi` artboard.
+Editable source for Mochi's mascot. One 320×320 `Mochi` artboard: standing red panda with a wave pose and a ringed tail.
 
-To publish the runtime asset, authenticate with the official Rive CLI, then run this from this directory:
+To publish the runtime asset:
 
 ```bash
 rive login
 rive . --publish=local
 ```
 
-Copy the resulting `.riv` file from `build/` to `public/mascot/mochi.riv`, then set `NEXT_PUBLIC_RIVE_MOCHI_ENABLED=true` in the relevant environment and redeploy. The current scene has no scripts, so Rive publishes it as an unsigned asset.
+Copy `build/mochi.riv` to `public/mascot/mochi.riv`, then set `NEXT_PUBLIC_RIVE_MOCHI_ENABLED=true`.
 
-Until that signed `.riv` asset exists, the app uses its equivalent inline SVG fallback. This guarantees a usable mascot for reduced-motion, unavailable WebGL, and file-load failure scenarios.
+Until that file is published, the app draws the matching animated SVG in `src/components/mascot/mochi-fallback.tsx` (blink, wave, tail wag, pet reaction).

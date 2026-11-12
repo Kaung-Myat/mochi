@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useAuthState } from "@/components/auth/auth-provider";
 import { SetupMessage } from "@/components/auth/require-auth";
+import { MochiMascot } from "@/components/mascot/mochi-mascot";
 
 export default function HomePage() {
   const router = useRouter();
@@ -21,14 +22,13 @@ export default function HomePage() {
 
   return (
     <main
-      className="mx-auto flex min-h-dvh max-w-md flex-col justify-center px-6 py-10"
+      className="auth-game-page mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center px-6 py-10 text-center"
       aria-busy="true"
     >
-      <p className="text-sm font-medium tracking-wide text-stone-600">MOCHI</p>
-      <h1 className="mt-3 text-3xl font-semibold tracking-tight">
-        မင်းရဲ့နေရာလေးကို ဖွင့်ပေးနေတယ်…
-      </h1>
-      <p className="mt-4 text-stone-700">ခဏလေး စောင့်ပေးနော်။</p>
+      <MochiMascot className="mochi-idle w-48" />
+      <p className="mt-2 text-xs font-bold tracking-[0.2em] text-rose-800/60">MOCHI &amp; YOU</p>
+      <h1 className="mt-2 text-2xl font-semibold tracking-tight">မင်းဆီကို ပြေးလာနေတယ်…</h1>
+      <p className="mt-2 text-sm text-stone-600">ခဏလေး စောင့်ပေးနော်။</p>
     </main>
   );
 }

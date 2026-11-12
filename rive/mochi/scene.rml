@@ -1,29 +1,202 @@
 <Rive version="1" kind="fragment">
   <Artboard styleId="0:5" width="320" height="320" name="Mochi" id="0:2">
     <LayoutComponentStyle name="Mochi Style" id="0:5"/>
-    <Shape name="Left blush">
-      <Ellipse width="38" height="20" x="105" y="195"/>
-      <Fill><SolidColor colorValue="FFEAB9AA"/></Fill>
+
+    <!-- First shape paints in front. Features, then body, then tail. -->
+
+    <Shape name="Left pupil shine" x="123" y="108">
+      <Ellipse width="9" height="9"/>
+      <Fill><SolidColor colorValue="FFFFFFFF"/></Fill>
     </Shape>
-    <Shape name="Right blush">
-      <Ellipse width="38" height="20" x="215" y="195"/>
-      <Fill><SolidColor colorValue="FFEAB9AA"/></Fill>
+    <Shape name="Right pupil shine" x="191" y="108">
+      <Ellipse width="9" height="9"/>
+      <Fill><SolidColor colorValue="FFFFFFFF"/></Fill>
     </Shape>
-    <Shape name="Left eye">
-      <Ellipse width="14" height="20" x="119" y="157"/>
-      <Fill><SolidColor colorValue="FF2C211D"/></Fill>
+    <Shape name="Left pupil" x="128" y="116">
+      <Ellipse width="14" height="18"/>
+      <Fill><SolidColor colorValue="FF2A1C16"/></Fill>
     </Shape>
-    <Shape name="Right eye">
-      <Ellipse width="14" height="20" x="201" y="157"/>
-      <Fill><SolidColor colorValue="FF2C211D"/></Fill>
+    <Shape name="Right pupil" x="196" y="116">
+      <Ellipse width="14" height="18"/>
+      <Fill><SolidColor colorValue="FF2A1C16"/></Fill>
     </Shape>
-    <Shape name="Mouth">
-      <Ellipse width="26" height="12" x="160" y="190"/>
-      <Fill><SolidColor colorValue="FF2C211D"/></Fill>
+    <Shape name="Left iris" x="128" y="114">
+      <Ellipse width="24" height="28"/>
+      <Fill><SolidColor colorValue="FF7CB342"/></Fill>
     </Shape>
-    <Shape name="Mochi body">
-      <Ellipse width="220" height="190" x="160" y="176"/>
-      <Fill><SolidColor colorValue="FFF4DFD4"/></Fill>
+    <Shape name="Right iris" x="196" y="114">
+      <Ellipse width="24" height="28"/>
+      <Fill><SolidColor colorValue="FF7CB342"/></Fill>
+    </Shape>
+    <Shape name="Left eye" x="126" y="112">
+      <Ellipse width="44" height="48"/>
+      <Fill><SolidColor colorValue="FFFFFDFB"/></Fill>
+    </Shape>
+    <Shape name="Right eye" x="194" y="112">
+      <Ellipse width="44" height="48"/>
+      <Fill><SolidColor colorValue="FFFFFDFB"/></Fill>
+    </Shape>
+
+    <Shape name="Nose shine" x="158" y="132">
+      <Ellipse width="5" height="4"/>
+      <Fill><SolidColor colorValue="FFFFFFFF"/></Fill>
+    </Shape>
+    <Shape name="Nose" x="160" y="134">
+      <Ellipse width="16" height="12"/>
+      <Fill><SolidColor colorValue="FF2A1C16"/></Fill>
+    </Shape>
+    <Shape name="Mouth" x="160" y="152">
+      <Ellipse width="20" height="6"/>
+      <Fill><SolidColor colorValue="FF5B3A2E"/></Fill>
+    </Shape>
+    <Shape name="Left blush" x="102" y="128" opacity="0.9">
+      <Ellipse width="24" height="16"/>
+      <Fill><SolidColor colorValue="FFF7B2A8"/></Fill>
+    </Shape>
+    <Shape name="Right blush" x="218" y="128" opacity="0.9">
+      <Ellipse width="24" height="16"/>
+      <Fill><SolidColor colorValue="FFF7B2A8"/></Fill>
+    </Shape>
+
+    <Shape name="Muzzle" x="160" y="128">
+      <Ellipse width="84" height="68"/>
+      <Fill><SolidColor colorValue="FFFFE8D4"/></Fill>
+    </Shape>
+    <Shape name="Left brow fluff" x="124" y="96" rotation="-0.31416">
+      <Ellipse width="32" height="20"/>
+      <Fill><SolidColor colorValue="FFFFE8D4"/></Fill>
+    </Shape>
+    <Shape name="Right brow fluff" x="196" y="96" rotation="0.31416">
+      <Ellipse width="32" height="20"/>
+      <Fill><SolidColor colorValue="FFFFE8D4"/></Fill>
+    </Shape>
+
+    <Shape name="Wave pad a" x="212" y="152">
+      <Ellipse width="7" height="6"/>
+      <Fill><SolidColor colorValue="FFE8A090"/></Fill>
+    </Shape>
+    <Shape name="Wave pad b" x="219" y="150">
+      <Ellipse width="7" height="6"/>
+      <Fill><SolidColor colorValue="FFE8A090"/></Fill>
+    </Shape>
+    <Shape name="Wave pad c" x="226" y="152">
+      <Ellipse width="7" height="6"/>
+      <Fill><SolidColor colorValue="FFE8A090"/></Fill>
+    </Shape>
+    <Shape name="Wave paw tip" x="218" y="156">
+      <Ellipse width="28" height="26"/>
+      <Fill><SolidColor colorValue="FF3A2218"/></Fill>
+    </Shape>
+    <Shape name="Wave arm" x="214" y="176" rotation="-0.5585">
+      <Ellipse width="30" height="52"/>
+      <Fill><SolidColor colorValue="FFF07828"/></Fill>
+    </Shape>
+
+    <Shape name="Rest pad a" x="100" y="226">
+      <Ellipse width="7" height="6"/>
+      <Fill><SolidColor colorValue="FFE8A090"/></Fill>
+    </Shape>
+    <Shape name="Rest pad b" x="107" y="228">
+      <Ellipse width="7" height="6"/>
+      <Fill><SolidColor colorValue="FFE8A090"/></Fill>
+    </Shape>
+    <Shape name="Rest pad c" x="114" y="226">
+      <Ellipse width="7" height="6"/>
+      <Fill><SolidColor colorValue="FFE8A090"/></Fill>
+    </Shape>
+    <Shape name="Rest paw tip" x="104" y="224">
+      <Ellipse width="28" height="24"/>
+      <Fill><SolidColor colorValue="FF3A2218"/></Fill>
+    </Shape>
+    <Shape name="Rest arm" x="108" y="206" rotation="0.384">
+      <Ellipse width="30" height="48"/>
+      <Fill><SolidColor colorValue="FFF07828"/></Fill>
+    </Shape>
+
+    <Shape name="Left inner ear" x="108" y="62" rotation="-0.279">
+      <Ellipse width="24" height="32"/>
+      <Fill><SolidColor colorValue="FFF4B8A8"/></Fill>
+    </Shape>
+    <Shape name="Right inner ear" x="212" y="62" rotation="0.279">
+      <Ellipse width="24" height="32"/>
+      <Fill><SolidColor colorValue="FFF4B8A8"/></Fill>
+    </Shape>
+    <Shape name="Left ear fluff" x="110" y="58" rotation="-0.279">
+      <Ellipse width="28" height="20"/>
+      <Fill><SolidColor colorValue="FFFFE8D4"/></Fill>
+    </Shape>
+    <Shape name="Right ear fluff" x="210" y="58" rotation="0.279">
+      <Ellipse width="28" height="20"/>
+      <Fill><SolidColor colorValue="FFFFE8D4"/></Fill>
+    </Shape>
+    <Shape name="Left ear" x="108" y="58" rotation="-0.279">
+      <Ellipse width="48" height="60"/>
+      <Fill><SolidColor colorValue="FFF07828"/></Fill>
+    </Shape>
+    <Shape name="Right ear" x="212" y="58" rotation="0.279">
+      <Ellipse width="48" height="60"/>
+      <Fill><SolidColor colorValue="FFF07828"/></Fill>
+    </Shape>
+
+    <Shape name="Head" x="160" y="112">
+      <Ellipse width="156" height="140"/>
+      <Fill><SolidColor colorValue="FFF07828"/></Fill>
+    </Shape>
+
+    <Shape name="Belly" x="160" y="208">
+      <Ellipse width="64" height="76"/>
+      <Fill><SolidColor colorValue="FFFFE8D4"/></Fill>
+    </Shape>
+    <Shape name="Body" x="160" y="198">
+      <Ellipse width="116" height="124"/>
+      <Fill><SolidColor colorValue="FFF07828"/></Fill>
+    </Shape>
+
+    <Shape name="Left foot" x="132" y="284">
+      <Ellipse width="40" height="20"/>
+      <Fill><SolidColor colorValue="FFFFE8D4"/></Fill>
+    </Shape>
+    <Shape name="Right foot" x="188" y="284">
+      <Ellipse width="40" height="20"/>
+      <Fill><SolidColor colorValue="FFFFE8D4"/></Fill>
+    </Shape>
+    <Shape name="Left leg" x="134" y="256">
+      <Ellipse width="36" height="72"/>
+      <Fill><SolidColor colorValue="FF3A2218"/></Fill>
+    </Shape>
+    <Shape name="Right leg" x="186" y="256">
+      <Ellipse width="36" height="72"/>
+      <Fill><SolidColor colorValue="FF3A2218"/></Fill>
+    </Shape>
+
+    <Shape name="Tail tip" x="248" y="98">
+      <Ellipse width="24" height="24"/>
+      <Fill><SolidColor colorValue="FFFFE8D4"/></Fill>
+    </Shape>
+    <Shape name="Tail band 5" x="262" y="114" rotation="-0.244">
+      <Ellipse width="28" height="32"/>
+      <Fill><SolidColor colorValue="FFF07828"/></Fill>
+    </Shape>
+    <Shape name="Tail ring 4" x="268" y="136" rotation="-0.07">
+      <Ellipse width="32" height="36"/>
+      <Fill><SolidColor colorValue="FFFFE8D4"/></Fill>
+    </Shape>
+    <Shape name="Tail band 3" x="262" y="162" rotation="0.14">
+      <Ellipse width="36" height="44"/>
+      <Fill><SolidColor colorValue="FFF07828"/></Fill>
+    </Shape>
+    <Shape name="Tail ring 2" x="248" y="188" rotation="0.314">
+      <Ellipse width="40" height="48"/>
+      <Fill><SolidColor colorValue="FFFFE8D4"/></Fill>
+    </Shape>
+    <Shape name="Tail base" x="228" y="210" rotation="0.489">
+      <Ellipse width="44" height="56"/>
+      <Fill><SolidColor colorValue="FFF07828"/></Fill>
+    </Shape>
+
+    <Shape name="Shadow" x="160" y="298">
+      <Ellipse width="136" height="28"/>
+      <Fill><SolidColor colorValue="FF6B3F28"/></Fill>
     </Shape>
   </Artboard>
 </Rive>

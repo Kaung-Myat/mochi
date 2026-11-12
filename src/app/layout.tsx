@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Noto_Sans_Myanmar, Noto_Serif_Myanmar } from "next/font/google";
+import { AppProviders } from "@/components/providers/app-providers";
 import "./globals.css";
 
 const myanmarSans = Noto_Sans_Myanmar({
@@ -24,21 +25,25 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     title: "Mochi",
-    statusBarStyle: "default",
+    statusBarStyle: "black-translucent",
   },
   formatDetection: { telephone: false },
 };
 export const viewport: Viewport = {
-  themeColor: "#fffaf3",
+  themeColor: "#8fd0f8",
   width: "device-width",
   initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
   viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="my" className={`${myanmarSans.variable} ${myanmarSerif.variable}`}>
-      <body>{children}</body>
+      <body>
+        <AppProviders>{children}</AppProviders>
+      </body>
     </html>
   );
 }

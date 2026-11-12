@@ -3,22 +3,24 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { SVGProps } from "react";
+import { useGameFeedback } from "@/components/game/game-feedback-provider";
 
 const items = [
-  { href: "/today", label: "ဒီနေ့", icon: TodayIcon },
-  { href: "/tummy", label: "ဗိုက်လေး", icon: TummyIcon },
-  { href: "/routine", label: "အစီအစဉ်", icon: RoutineIcon },
-  { href: "/settings", label: "ဆက်တင်", icon: SettingsIcon },
+  { href: "/today", label: "Mochi", icon: TodayIcon },
+  { href: "/tummy", label: "Diary", icon: TummyIcon },
+  { href: "/routine", label: "Mission", icon: RoutineIcon },
+  { href: "/settings", label: "Settings", icon: SettingsIcon },
 ];
 
 export function BottomNavigation() {
   const pathname = usePathname();
+  const { play } = useGameFeedback();
   return (
     <nav
-      aria-label="အဓိက စာမျက်နှာများ"
-      className="fixed inset-x-0 bottom-0 z-20 border-t border-stone-200 bg-[#fffaf3]/95 pb-[env(safe-area-inset-bottom)] backdrop-blur"
+      aria-label="Main"
+      className="floating-nav fixed z-40 rounded-[1.75rem] border-[3px] border-[#7ec8f8] bg-white/95 py-1 shadow-[0_6px_0_#5fb4e8,0_14px_28px_rgb(40_70_90_/_.22)] backdrop-blur-md"
     >
-      <div className="mx-auto grid max-w-md grid-cols-4">
+      <div className="grid grid-cols-4">
         {items.map((item) => {
           const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
           const Icon = item.icon;
@@ -27,10 +29,14 @@ export function BottomNavigation() {
               key={item.href}
               href={item.href}
               aria-current={active ? "page" : undefined}
-              className={`flex min-h-16 flex-col items-center justify-center gap-1 text-xs ${active ? "font-semibold text-stone-950" : "text-stone-500"}`}
+              onClick={() => play("soft")}
+              className={`relative flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-[1.35rem] px-1 text-[0.68rem] tracking-wide transition active:scale-95 ${active ? "font-semibold text-[#1d6f9a]" : "font-medium text-[#7d92a3]"}`}
             >
-              <Icon aria-hidden="true" className="size-5" />
-              {item.label}
+              {active && (
+                <span className="absolute top-0.5 size-7 rounded-full bg-[#ffd15c] shadow-[0_2px_0_#e2b000]" />
+              )}
+              <Icon aria-hidden="true" className="relative z-10 size-[1.15rem]" />
+              <span className="relative z-10 leading-none">{item.label}</span>
             </Link>
           );
         })}

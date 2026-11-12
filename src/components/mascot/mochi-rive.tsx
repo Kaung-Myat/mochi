@@ -1,16 +1,26 @@
 "use client";
 
-import Rive from "@rive-app/react-canvas";
+import { Alignment, Fit, Layout, useRive } from "@rive-app/react-canvas";
+import { useState } from "react";
+import { MochiFallback } from "./mochi-fallback";
+
+const mascotLayout = new Layout({
+  fit: Fit.Contain,
+  alignment: Alignment.Center,
+});
 
 export function MochiRive() {
-  return (
-    <Rive
-      aria-hidden="true"
-      artboard="Mochi"
-      className="size-full"
-      shouldDisableRiveListeners
-      shouldResizeCanvasToContainer
-      src="/mascot/mochi.riv"
-    />
-  );
+  const [failed, setFailed] = useState(false);
+  const { RiveComponent } = useRive({
+    src: "/mascot/mochi.riv",
+    artboard: "Mochi",
+    autoplay: true,
+    layout: mascotLayout,
+    shouldDisableRiveListeners: true,
+    onLoadError: () => setFailed(true),
+  });
+
+  if (failed) return <MochiFallback />;
+
+  return <RiveComponent aria-hidden="true" className="size-full" />;
 }

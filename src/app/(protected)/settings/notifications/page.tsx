@@ -1,14 +1,21 @@
 import Link from "next/link";
+import { GamePageHeader } from "@/components/layout/game-page-header";
 import { NotificationSettings } from "@/components/reminders/notification-settings";
 
 export default function NotificationSettingsPage() {
   return (
-    <main className="mx-auto min-h-dvh max-w-md px-6 py-10 pb-28">
-      <Link className="text-sm underline" href="/settings">
+    <main className="game-page mx-auto min-h-dvh max-w-md px-4 pt-[max(1rem,env(safe-area-inset-top))]">
+      <Link
+        className="mb-4 inline-flex min-h-10 items-center rounded-full bg-white/60 px-4 text-sm font-semibold text-rose-900"
+        href="/settings"
+      >
         ဆက်တင်သို့ ပြန်သွားမယ်
       </Link>
-      <p className="mt-6 text-sm font-medium tracking-wide text-stone-600">MOCHI</p>
-      <h1 className="mt-3 text-4xl font-semibold">သတိပေးချက်များ</h1>
+      <GamePageHeader
+        eyebrow="MOCHI ရဲ့ စာပို့သံ"
+        title="သတိပေးချက်"
+        description="Mochi က ဘယ်အချိန်မှာ လာခေါ်ပေးရမလဲ ရွေးမယ်။"
+      />
       <NotificationSettings />
     </main>
   );
