@@ -1,0 +1,29 @@
+<Rive version="1" kind="fragment">
+  <Artboard styleId="0:5" width="320" height="320" name="Mochi" id="0:2">
+    <LayoutComponentStyle name="Mochi Style" id="0:5"/>
+    <Shape name="Left blush">
+      <Ellipse width="38" height="20" x="105" y="195"/>
+      <Fill><SolidColor colorValue="FFEAB9AA"/></Fill>
+    </Shape>
+    <Shape name="Right blush">
+      <Ellipse width="38" height="20" x="215" y="195"/>
+      <Fill><SolidColor colorValue="FFEAB9AA"/></Fill>
+    </Shape>
+    <Shape name="Left eye">
+      <Ellipse width="14" height="20" x="119" y="157"/>
+      <Fill><SolidColor colorValue="FF2C211D"/></Fill>
+    </Shape>
+    <Shape name="Right eye">
+      <Ellipse width="14" height="20" x="201" y="157"/>
+      <Fill><SolidColor colorValue="FF2C211D"/></Fill>
+    </Shape>
+    <Shape name="Mouth">
+      <Ellipse width="26" height="12" x="160" y="190"/>
+      <Fill><SolidColor colorValue="FF2C211D"/></Fill>
+    </Shape>
+    <Shape name="Mochi body">
+      <Ellipse width="220" height="190" x="160" y="176"/>
+      <Fill><SolidColor colorValue="FFF4DFD4"/></Fill>
+    </Shape>
+  </Artboard>
+</Rive>

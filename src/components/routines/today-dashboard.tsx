@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useAuthState } from "@/components/auth/auth-provider";
+import { MochiMascot } from "@/components/mascot/mochi-mascot";
 import { detectTimezone } from "@/lib/profile/schema";
 import { greetingForHour, localDateKey, sleepDurationMinutes } from "@/lib/routines/date";
 import type { DailyEvent } from "@/lib/routines/events";
@@ -139,12 +140,19 @@ export function TodayDashboard() {
         )}
       </div>
 
-      <section className="rounded-3xl bg-[#f4dfd4] p-6">
-        <p className="text-sm font-medium text-stone-600">
-          {greetingForHour(localHour)}
-          {name ? `၊ ${name}` : ""}
-        </p>
-        <h2 className="mt-2 text-2xl font-semibold">တစ်ခုပြီးတစ်ခု အေးအေးဆေးဆေး လုပ်ကြမယ်နော်။</h2>
+      <section className="overflow-hidden rounded-3xl bg-[#f4dfd4] p-6">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-medium text-stone-600">
+              {greetingForHour(localHour)}
+              {name ? `၊ ${name}` : ""}
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold">
+              တစ်ခုပြီးတစ်ခု အေးအေးဆေးဆေး လုပ်ကြမယ်နော်။
+            </h2>
+          </div>
+          <MochiMascot className="w-24 shrink-0 sm:w-28" />
+        </div>
         <div className="mt-5 rounded-2xl bg-white/60 p-4">
           <p className="text-xs font-semibold tracking-wide text-stone-500">နောက်တစ်ခု</p>
           <p className="mt-1 font-medium">{nextUp ?? "ဒီနေ့အတွက် နောက်ထပ်အစီအစဉ် မရှိတော့ပါဘူး"}</p>
