@@ -34,8 +34,8 @@ messaging.onBackgroundMessage((payload) => {
     tag: typeof payload.data?.occurrenceId === "string" ? payload.data.occurrenceId : "mochi-reminder",
     renotify: true,
     silent: false,
-    icon: "/icon",
-    badge: "/icon",
+    icon: "/icons/mochi-192.png",
+    badge: "/icons/mochi-192.png",
     data: { link },
   });
 });
