@@ -119,52 +119,73 @@ export function TodayDashboard() {
     }
   }
 
-  if (loadingParts > 0)
-    return (
-      <p className="mt-8 px-5 text-stone-600" role="status">
-        Mochi နိုးလာအောင် ခဏစောင့်ပေးနော်…
-      </p>
-    );
   if (!user) return null;
 
+  const loading = loadingParts > 0;
   const completedMeals = events.filter((event) => event.type === "meal_completed").length;
-  const actions: CompanionAction[] = [];
-  if (hydration) {
-    actions.push({
-      id: "water",
-      label: `ရေတိုက်မယ်၊ ${waterEvents.length} / ${hydration.dailyTargetGlasses} ခွက်`,
-      caption: "ရေ",
-      badge: `${waterEvents.length}/${hydration.dailyTargetGlasses}`,
-      active: activePanel === "water",
-      onClick: () => setActivePanel((panel) => (panel === "water" ? null : "water")),
-    });
-  }
-  if (meals.length > 0) {
-    actions.push({
-      id: "meals",
-      label: `စားချိန်၊ ${completedMeals} / ${meals.length} ပြီး`,
-      caption: "စား",
-      badge: `${completedMeals}/${meals.length}`,
-      active: activePanel === "meals",
-      onClick: () => setActivePanel((panel) => (panel === "meals" ? null : "meals")),
-    });
-  }
-  if (sleep) {
-    actions.push({
-      id: "sleep",
-      label: `အိပ်ချိန်၊ ${sleep.bedtimeLocalTime} မှာ`,
-      caption: "အိပ်",
-      badge: sleep.bedtimeLocalTime,
-      active: activePanel === "sleep",
-      onClick: () => setActivePanel((panel) => (panel === "sleep" ? null : "sleep")),
-    });
-  }
-  actions.push({
-    id: "tummy",
-    label: "ဗိုက်လေး မှတ်စုရေးမယ်",
-    caption: "ဗိုက်",
-    href: "/tummy",
-  });
+  const openOrToggle = (panel: "water" | "meals" | "sleep") =>
+    setActivePanel((current) => (current === panel ? null : panel));
+  const openSetup = () => setActivePanel("setup");
+
+  const actions: CompanionAction[] = [
+    hydration
+      ? {
+          id: "water",
+          label: `ရေတိုက်မယ်၊ ${waterEvents.length} / ${hydration.dailyTargetGlasses} ခွက်`,
+          caption: "ရေ",
+          badge: `${waterEvents.length}/${hydration.dailyTargetGlasses}`,
+          active: activePanel === "water",
+          onClick: () => openOrToggle("water"),
+        }
+      : {
+          id: "water",
+          label: "ရေ mission ထည့်မယ်",
+          caption: "ရေ",
+          badge: "+",
+          active: activePanel === "setup",
+          onClick: openSetup,
+        },
+    meals.length > 0
+      ? {
+          id: "meals",
+          label: `စားချိန်၊ ${completedMeals} / ${meals.length} ပြီး`,
+          caption: "စား",
+          badge: `${completedMeals}/${meals.length}`,
+          active: activePanel === "meals",
+          onClick: () => openOrToggle("meals"),
+        }
+      : {
+          id: "meals",
+          label: "စားချိန် mission ထည့်မယ်",
+          caption: "စား",
+          badge: "+",
+          active: activePanel === "setup",
+          onClick: openSetup,
+        },
+    sleep
+      ? {
+          id: "sleep",
+          label: `အိပ်ချိန်၊ ${sleep.bedtimeLocalTime} မှာ`,
+          caption: "အိပ်",
+          badge: sleep.bedtimeLocalTime,
+          active: activePanel === "sleep",
+          onClick: () => openOrToggle("sleep"),
+        }
+      : {
+          id: "sleep",
+          label: "အိပ်ချိန် mission ထည့်မယ်",
+          caption: "အိပ်",
+          badge: "+",
+          active: activePanel === "setup",
+          onClick: openSetup,
+        },
+    {
+      id: "tummy",
+      label: "ဗိုက်လေး မှတ်စုရေးမယ်",
+      caption: "ဗိုက်",
+      href: "/tummy",
+    },
+  ];
 
   const name = user.displayName?.split(" ")[0];
   const localHour = Number(
@@ -185,15 +206,24 @@ export function TodayDashboard() {
             : "";
 
   return (
-    <div className="relative">
+    <div className="relative h-full min-h-full">
       <CompanionHero
         greeting={greetingForHour(localHour)}
         name={name}
-        nextUp={nextUp ?? "ဒီနေ့အတွက် နောက်ထပ်အစီအစဉ် မရှိတော့ပါဘူး"}
+        nextUp={
+          loading
+            ? "Mochi နိုးလာအောင် ခဏစောင့်ပေးနော်…"
+            : (nextUp ?? "ဒီနေ့အတွက် နောက်ထပ်အစီအစဉ် မရှိတော့ပါဘူး")
+        }
         actions={actions}
       />
 
-      <div aria-live="polite" className="pointer-events-none absolute inset-x-3 top-[4.8rem] z-30 grid gap-2">
+      <div aria-live="polite" className="pointer-events-none absolute inset-x-3 top-[4.8rem] z-[25] grid gap-2">
+        {loading && (
+          <p className="rounded-xl bg-white/90 px-3 py-2 text-sm text-stone-600 shadow" role="status">
+            ဒီနေ့အချက်အလက်တွေ ဖွင့်နေတယ်…
+          </p>
+        )}
         {!online && (
           <p className="pointer-events-auto rounded-xl bg-amber-100/95 px-3 py-2 text-sm text-amber-950 shadow">
             အင်တာနက် ခဏပြတ်နေတယ်နော်။ ပြောင်းထားတာတွေကို ဒီစက်မှာ စောင့်ထားမယ်။

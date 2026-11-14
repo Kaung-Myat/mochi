@@ -1,8 +1,15 @@
-import { getFirebaseConfig } from "@/lib/firebase/config";
+import { getFirebaseConfig, isFirebaseConfigured } from "@/lib/firebase/config";
 
 export const dynamic = "force-dynamic";
 
 export function GET() {
+  if (!isFirebaseConfigured) {
+    return new Response("Firebase is not configured for messaging.", {
+      status: 500,
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    });
+  }
+
   const config = JSON.stringify(getFirebaseConfig()).replaceAll("<", "\\u003c");
   const source = `
 self.addEventListener("notificationclick", (event) => {

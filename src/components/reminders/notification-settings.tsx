@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useAuthState } from "@/components/auth/auth-provider";
+import { useGameFeedback } from "@/components/game/game-feedback-provider";
 import {
   disableNotifications,
   enableNotifications,
@@ -25,9 +26,11 @@ const capabilityLabels: Record<NotificationCapability, string> = {
 
 export function NotificationSettings() {
   const { user } = useAuthState();
+  const { play } = useGameFeedback();
   const [capability, setCapability] = useState<NotificationCapability>("checking");
   const [registered, setRegistered] = useState(false);
   const [iosInstallRequired, setIosInstallRequired] = useState(false);
+  const [androidHint, setAndroidHint] = useState(false);
   const [preferences, setPreferences] = useState<ReminderPreferences>(defaultReminderPreferences);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<"enable" | "disable" | "save" | "test" | null>(null);
@@ -37,9 +40,11 @@ export function NotificationSettings() {
 
   useEffect(() => {
     const ios = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const android = /Android/i.test(navigator.userAgent);
     const standalone =
       window.matchMedia("(display-mode: standalone)").matches ||
       Boolean((navigator as Navigator & { standalone?: boolean }).standalone);
+    setAndroidHint(android);
     void getNotificationCapability().then((value) => {
       setIosInstallRequired(ios && !standalone);
       setCapability(value);
@@ -51,8 +56,9 @@ export function NotificationSettings() {
     if (capability !== "granted") return;
     return subscribeForegroundReminders(() => {
       setMessage("Mochi ရဲ့ သတိပေးချက် ရောက်လာပါပြီ။");
+      play("soft");
     });
-  }, [capability]);
+  }, [capability, play]);
 
   useEffect(() => {
     if (!user) return;
@@ -79,6 +85,7 @@ export function NotificationSettings() {
     setMessage(null);
     try {
       await callback();
+      play(action === "disable" ? "soft" : "success");
       setMessage(success);
       const nextCapability = await getNotificationCapability();
       setCapability(nextCapability);
@@ -92,82 +99,93 @@ export function NotificationSettings() {
 
   if (!user || loading) {
     return (
-      <p className="mt-8 text-stone-600" role="status">
+      <p className="mt-6 text-center text-sm text-stone-600" role="status">
         သတိပေးချက်ဆက်တင်တွေကို ဖွင့်နေတယ်…
       </p>
     );
   }
 
   return (
-    <div className="mt-8 grid gap-6">
-      <div className="grid grid-cols-2 gap-2 rounded-[1.6rem] border border-white/80 bg-white/60 p-2 shadow-[0_12px_30px_rgba(80,45,40,0.08)]">
-        <button
-          type="button"
-          aria-pressed={activePanel === "device"}
-          onClick={() => setActivePanel("device")}
-          className={`min-h-11 rounded-2xl px-3 text-sm font-semibold ${activePanel === "device" ? "bg-rose-500 text-white" : "text-stone-600"}`}
-        >
+    <div className="mt-4 grid gap-3">
+      <div className="grid grid-cols-2 gap-2 rounded-[1.35rem] border-[3px] border-white bg-white/80 p-1.5 shadow-[0_5px_0_#f0c9a8]">
+        <TabButton active={activePanel === "device"} onClick={() => setActivePanel("device")}>
           ဒီစက်
-        </button>
-        <button
-          type="button"
-          aria-pressed={activePanel === "schedule"}
-          onClick={() => setActivePanel("schedule")}
-          className={`min-h-11 rounded-2xl px-3 text-sm font-semibold ${activePanel === "schedule" ? "bg-rose-500 text-white" : "text-stone-600"}`}
-        >
+        </TabButton>
+        <TabButton active={activePanel === "schedule"} onClick={() => setActivePanel("schedule")}>
           အချိန်များ
-        </button>
+        </TabButton>
       </div>
 
       {activePanel === "device" && (
         <>
-          <section className="rounded-3xl bg-[#f4dfd4] p-6">
-            <p className="text-sm text-stone-600">နူးညံ့တဲ့ သတိပေးချက်</p>
-            <h2 className="mt-1 text-2xl font-semibold">မင်းရွေးချယ်မှသာ Mochi က ခွင့်တောင်းမယ်</h2>
-            <p className="mt-3 text-stone-700">
-              Lock screen ပေါ်မှာ ကိုယ်ရေးကိုယ်တာ၊ စားသောက်မှုနဲ့ ဝမ်းဗိုက်မှတ်စုတွေ မဖော်ပြပါဘူး။
-              Web notification တွေဟာ browser၊ အင်တာနက်နဲ့ ဖုန်းရဲ့ power setting ပေါ်မူတည်လို့
-              အချိန်အတိအကျရောက်မယ်လို့ အာမခံလို့မရပါဘူး။
+          <section className="rounded-[1.5rem] border-[3px] border-white bg-[#fff7ee] p-4 shadow-[0_5px_0_#f0c9a8]">
+            <p className="text-[0.62rem] font-bold tracking-[0.14em] text-[#c45a3c]">DEVICE LINK</p>
+            <h2 className="mt-0.5 text-lg font-semibold text-[#3a2a24]">
+              မင်းရွေးချယ်မှသာ Mochi က ခွင့်တောင်းမယ်
+            </h2>
+            <p className="mt-2 text-[0.78rem] text-stone-600">
+              Lock screen ပေါ်မှာ ကိုယ်ရေးကိုယ်တာ မဖော်ပြပါဘူး။ Web notification တွေဟာ browser / အင်တာနက် /
+              ဖုန်း power setting ပေါ်မူတည်ပါတယ်။
             </p>
           </section>
 
           {iosInstallRequired && (
-            <section className="rounded-3xl border border-amber-300 bg-amber-50 p-5" role="status">
-              <h2 className="text-xl font-semibold">iPhone မှာ Home Screen ထဲ အရင်ထည့်ပေးနော်</h2>
-              <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-stone-700">
+            <section className="rounded-[1.5rem] border-2 border-amber-300 bg-amber-50 p-4" role="status">
+              <h2 className="text-base font-semibold text-[#3a2a24]">
+                iPhone မှာ Home Screen ထဲ အရင်ထည့်ပေးနော်
+              </h2>
+              <ol className="mt-2 list-decimal space-y-1.5 pl-5 text-[0.78rem] text-stone-700">
                 <li>Safari အောက်ဘက်က Share ခလုတ်ကို နှိပ်ပါ။</li>
                 <li>“Add to Home Screen” ကိုရွေးပြီး Add နှိပ်ပါ။</li>
-                <li>Safari tab ကိုပိတ်ပြီး Home Screen က Mochi icon ကနေ ပြန်ဖွင့်ပါ။</li>
+                <li>Home Screen က Mochi icon ကနေ ပြန်ဖွင့်ပါ။</li>
               </ol>
-              <p className="mt-3 text-sm text-stone-700">
-                iPhone မှာ Home Screen app အဖြစ်ဖွင့်ထားမှ Web Push permission တောင်းလို့ရပါတယ်။
+            </section>
+          )}
+
+          {androidHint && capability === "unsupported" && (
+            <section className="rounded-[1.5rem] border-2 border-amber-300 bg-amber-50 p-4" role="status">
+              <h2 className="text-base font-semibold text-[#3a2a24]">Chrome နဲ့ ဖွင့်ပေးနော်</h2>
+              <p className="mt-2 text-[0.78rem] text-stone-700">
+                Facebook / Messenger ထဲက browser မှာ Push မရတတ်ပါဘူး။ Chrome app သို့မဟုတ် Home Screen
+                က Mochi ကို ဖွင့်ပြီး ထပ်စမ်းပေးပါ။
               </p>
             </section>
           )}
 
-          <section className="rounded-3xl border border-stone-200 bg-white/70 p-5">
-            <p className="text-sm text-stone-500">လက်ရှိအခြေအနေ</p>
-            <h2 className="mt-1 text-xl font-semibold">{capabilityLabels[capability]}</h2>
+          <section className="rounded-[1.5rem] border-[3px] border-white bg-white/90 p-4 shadow-[0_5px_0_#f0c9a8]">
+            <p className="text-[0.62rem] font-bold tracking-[0.14em] text-[#1d6f9a]">STATUS</p>
+            <h2 className="mt-0.5 text-lg font-semibold text-[#3a2a24]">
+              {capabilityLabels[capability]}
+            </h2>
+            {registered && (
+              <p className="mt-1 text-[0.72rem] font-semibold text-emerald-700">ဒီစက် ချိတ်ပြီးပါပြီ</p>
+            )}
             {capability === "denied" && (
-              <p className="mt-3 text-sm text-stone-700">
-                Address bar ဘေးက site settings ထဲဝင်ပြီး Notifications ကို Allow ပြောင်းပြီး
-                ဒီစာမျက်နှာကို ပြန်ဖွင့်ပေးပါ။ Mochi က ထပ်ခါထပ်ခါ permission မတောင်းပါဘူး။
+              <p className="mt-2 text-[0.78rem] text-stone-700">
+                Chrome ⋮ → Settings → Site settings → Notifications မှာ Allow ပြောင်းပြီး ဒီစာမျက်နှာကို
+                ပြန်ဖွင့်ပေးပါ။
               </p>
             )}
-            {capability === "unsupported" && (
-              <p className="mt-3 text-sm text-stone-700">
-                Notification မရရင်လည်း app ထဲက နောက်သတိပေးချက်နဲ့ နေ့စဉ်အစီအစဉ်တွေကို
-                ဆက်သုံးလို့ရပါတယ်။
+            {capability === "unsupported" && !androidHint && (
+              <p className="mt-2 text-[0.78rem] text-stone-700">
+                Notification မရရင်လည်း app ထဲက နေ့စဉ်အစီအစဉ်တွေကို ဆက်သုံးလို့ရပါတယ်။
               </p>
             )}
-            <div className="mt-5 flex flex-wrap gap-3">
+            {androidHint && registered && (
+              <p className="mt-2 text-[0.78rem] text-stone-600">
+                Android 13+ ဆိုရင် Phone Settings → Apps → Chrome (သို့) Mochi → Notifications ကိုလည်း
+                ဖွင့်ထားပေးနော်။
+              </p>
+            )}
+
+            <div className="mt-4 grid gap-2">
               {!registered &&
                 !iosInstallRequired &&
                 capability !== "unsupported" &&
                 capability !== "denied" && (
                   <button
                     type="button"
-                    className="min-h-11 rounded-full bg-stone-900 px-5 text-white disabled:opacity-50"
+                    className="min-h-12 rounded-full bg-[#7a45f5] text-sm font-semibold text-white shadow-[0_4px_0_#4520aa] disabled:opacity-50 active:translate-y-0.5 active:shadow-none"
                     disabled={busy !== null || capability === "checking"}
                     onClick={() =>
                       perform(
@@ -184,7 +202,7 @@ export function NotificationSettings() {
                 <>
                   <button
                     type="button"
-                    className="min-h-11 rounded-full bg-stone-900 px-5 text-white disabled:opacity-50"
+                    className="min-h-12 rounded-full bg-[#3a2a24] text-sm font-semibold text-white shadow-[0_4px_0_#1f1612] disabled:opacity-50"
                     disabled={busy !== null}
                     onClick={() =>
                       perform(
@@ -198,7 +216,7 @@ export function NotificationSettings() {
                   </button>
                   <button
                     type="button"
-                    className="min-h-11 rounded-full border border-stone-400 px-5 disabled:opacity-50"
+                    className="min-h-11 rounded-full border-2 border-[#3a2a24]/15 bg-white text-sm font-semibold text-[#3a2a24] disabled:opacity-50"
                     disabled={busy !== null}
                     onClick={() =>
                       perform(
@@ -213,26 +231,15 @@ export function NotificationSettings() {
                 </>
               )}
             </div>
-            {registered && (
-              <div className="mt-3 text-sm text-stone-600">
-                <p>
-                  Lock-screen notification ကိုစမ်းကြည့်ဖို့ ခလုတ်နှိပ်ပြီး app ကို background
-                  မှာထားပေးနော်။
-                </p>
-                <p className="mt-2">
-                  iPhone Settings → Notifications → Mochi ထဲမှာ Banners, Lock Screen နဲ့ Sounds ကို
-                  ဖွင့်ထားပြီး Focus mode က Mochi ကိုမပိတ်ထားကြောင်းလည်း စစ်ပေးပါ။
-                </p>
-              </div>
-            )}
           </section>
         </>
       )}
 
       {activePanel === "schedule" && (
-        <section className="rounded-3xl border border-stone-200 bg-white/70 p-5">
-          <h2 className="text-2xl font-semibold">ဘယ်အချိန်တွေ သတိပေးမလဲ</h2>
-          <div className="mt-5 grid gap-4">
+        <section className="rounded-[1.5rem] border-[3px] border-white bg-white/90 p-4 shadow-[0_5px_0_#f0c9a8]">
+          <p className="text-[0.62rem] font-bold tracking-[0.14em] text-[#c45a3c]">SCHEDULE</p>
+          <h2 className="mt-0.5 text-lg font-semibold text-[#3a2a24]">ဘယ်အချိန်တွေ သတိပေးမလဲ</h2>
+          <div className="mt-3 grid gap-2">
             <Toggle
               label="သတိပေးချက်အားလုံး"
               checked={preferences.enabled}
@@ -261,7 +268,7 @@ export function NotificationSettings() {
               }
             />
             {preferences.quietHoursEnabled && (
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-2.5">
                 <TimeField
                   label="စမယ့်အချိန်"
                   value={preferences.quietStartLocalTime}
@@ -281,7 +288,7 @@ export function NotificationSettings() {
           </div>
           <button
             type="button"
-            className="mt-5 min-h-11 rounded-full bg-stone-900 px-5 text-white disabled:opacity-50"
+            className="mt-4 min-h-12 w-full rounded-full bg-[#3a2a24] text-sm font-semibold text-white shadow-[0_4px_0_#1f1612] disabled:opacity-50"
             disabled={busy !== null}
             onClick={() =>
               perform(
@@ -297,16 +304,41 @@ export function NotificationSettings() {
       )}
 
       {message && (
-        <p className="rounded-2xl bg-emerald-50 p-4 text-sm text-emerald-900" role="status">
+        <p className="rounded-2xl bg-emerald-50 px-3 py-2.5 text-sm text-emerald-900" role="status">
           {message}
         </p>
       )}
       {error && (
-        <p className="rounded-2xl bg-red-50 p-4 text-sm text-red-900" role="alert">
+        <p className="rounded-2xl bg-red-50 px-3 py-2.5 text-sm text-red-900" role="alert">
           {error}
         </p>
       )}
     </div>
+  );
+}
+
+function TabButton({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: string;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={active}
+      onClick={onClick}
+      className={`min-h-11 rounded-2xl px-3 text-sm font-semibold transition ${
+        active
+          ? "bg-[#ffd15c] text-[#3a2a24] shadow-[0_2px_0_#e2b000]"
+          : "text-[#6b5548]"
+      }`}
+    >
+      {children}
+    </button>
   );
 }
 
@@ -320,14 +352,19 @@ function Toggle({
   onChange: (checked: boolean) => void;
 }) {
   return (
-    <label className="flex min-h-11 items-center justify-between gap-4">
+    <button
+      type="button"
+      aria-pressed={checked}
+      onClick={() => onChange(!checked)}
+      className={`flex min-h-12 w-full items-center justify-between gap-3 rounded-2xl border-2 px-3 text-left text-sm font-semibold ${
+        checked
+          ? "border-[#3a2a24] bg-[#ffd15c] text-[#3a2a24]"
+          : "border-[#f0d2bc] bg-[#fffaf3] text-[#6b5548]"
+      }`}
+    >
       <span>{label}</span>
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={(event) => onChange(event.currentTarget.checked)}
-      />
-    </label>
+      <span className="text-[0.72rem]">{checked ? "ON" : "OFF"}</span>
+    </button>
   );
 }
 
@@ -341,10 +378,10 @@ function TimeField({
   onChange: (value: string) => void;
 }) {
   return (
-    <label className="grid gap-2 text-sm">
+    <label className="grid gap-1.5 text-[0.78rem] font-semibold text-[#3a2a24]">
       {label}
       <input
-        className="min-h-11 rounded-xl border border-stone-300 bg-white px-3"
+        className="min-h-11 rounded-2xl border-2 border-[#f0d2bc] bg-white px-3 text-sm"
         type="time"
         value={value}
         required
@@ -360,10 +397,19 @@ function notificationErrorMessage(error: unknown): string {
     return "Notification ကို browser က ပိတ်ထားပါတယ်။ Site settings ထဲမှာ Allow ပြောင်းပေးပါ။";
   }
   if (value.includes("unsupported")) {
-    return "ဒီ browser သို့မဟုတ် device မှာ Web Push ကို အသုံးပြုလို့မရသေးပါဘူး။";
+    return "ဒီ browser သို့မဟုတ် device မှာ Web Push ကို အသုံးပြုလို့မရသေးပါဘူး။ Chrome နဲ့ ထပ်စမ်းပေးနော်။";
   }
   if (value.includes("missing-vapid-key")) {
     return "VAPID key မတွေ့ပါဘူး။ .env.local ကိုစစ်ပြီး dev server ပြန်ဖွင့်ပေးပါ။";
+  }
+  if (value.includes("sw-timeout") || value.includes("sw-failed") || value.includes("sw-missing")) {
+    return "Service worker မတက်နိုင်သေးဘူး။ အင်တာနက်စစ်ပြီး Chrome ကို ပြန်ဖွင့်ကာ ထပ်စမ်းပေးနော်။";
+  }
+  if (value.includes("push-unavailable")) {
+    return "ဒီစက်မှာ Push service မရသေးပါဘူး။ Chrome app notifications ဖွင့်ထားကြောင်း စစ်ပေးပါ။";
+  }
+  if (value.includes("token-unavailable")) {
+    return "FCM token မရသေးဘူး။ Permission ခွင့်ပြုပြီးမှ ထပ်စမ်းပေးနော်။";
   }
   if (value.includes("not-found") || value.includes("internal")) {
     return "စမ်းသပ်သတိပေးချက်ပို့မယ့် backend ကို မတင်ရသေးပါဘူး။";

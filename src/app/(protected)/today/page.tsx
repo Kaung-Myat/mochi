@@ -2,7 +2,7 @@ import { TodayDashboard } from "@/components/routines/today-dashboard";
 
 export default function TodayPage() {
   return (
-    <main className="fixed inset-0 overflow-hidden overscroll-none">
+    <main className="fixed inset-0 h-[100dvh] overflow-hidden overscroll-none">
       <TodayDashboard />
     </main>
   );

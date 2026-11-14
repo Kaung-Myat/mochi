@@ -46,21 +46,19 @@ export function CompanionHero({
   }
 
   return (
-    <section className="companion-stage relative isolate overflow-hidden pt-[max(0.5rem,env(safe-area-inset-top))]">
+    <section className="companion-stage pt-[max(0.5rem,env(safe-area-inset-top,0px))]">
       <div className="companion-plant" aria-hidden="true" />
       <div
-        className="companion-poster absolute top-[22%] right-[18%] h-14 w-10 rotate-3 rounded-md border-[3px] border-[#fff7ee] bg-[#7ed957] shadow-md sm:h-16 sm:w-12"
+        className="companion-poster absolute top-[22%] right-[18%] z-[1] h-14 w-10 rotate-3 rounded-md border-[3px] border-[#fff7ee] bg-[#7ed957] shadow-md sm:h-16 sm:w-12"
         aria-hidden="true"
       />
 
-      <p className="absolute top-[max(0.45rem,env(safe-area-inset-top))] left-1/2 z-20 w-[min(70vw,14rem)] -translate-x-1/2 text-center text-[0.7rem] font-bold text-white drop-shadow">
-        Today with Mochi
-      </p>
+      <p className="companion-title">Today with Mochi</p>
 
       <ActionColumn actions={actions.filter((_, index) => index % 2 === 0)} side="left" />
       <ActionColumn actions={actions.filter((_, index) => index % 2 === 1)} side="right" />
 
-      <div className="companion-bubble absolute top-[max(2.8rem,calc(env(safe-area-inset-top)+2.2rem))] left-1/2 z-20 w-[min(58vw,13rem)] -translate-x-1/2 rounded-2xl border-[3px] border-white bg-white/95 px-2.5 py-1.5 text-center text-[0.78rem] font-medium text-[#3a2a24] shadow-[0_5px_0_rgb(90,40,30)]">
+      <div className="companion-bubble rounded-2xl border-[3px] border-white bg-white/95 px-2.5 py-1.5 text-center text-[0.78rem] font-medium text-[#3a2a24] shadow-[0_5px_0_rgb(90,40,30)]">
         {loveNotes[noteIndex]}
         <span className="mt-0.5 block text-[0.68rem] font-semibold text-[#8a5a32]">
           {greeting}
@@ -93,7 +91,7 @@ function ActionColumn({ actions, side }: { actions: CompanionAction[]; side: "le
   if (actions.length === 0) return null;
   return (
     <div
-      className={`companion-actions absolute top-[max(3.6rem,calc(env(safe-area-inset-top)+3rem))] z-20 flex flex-col gap-2.5 ${side === "left" ? "left-2.5" : "right-2.5"}`}
+      className={`companion-actions ${side === "left" ? "companion-actions-left" : "companion-actions-right"}`}
     >
       {actions.map((action) => (
         <ActionButton key={action.id} action={action} />

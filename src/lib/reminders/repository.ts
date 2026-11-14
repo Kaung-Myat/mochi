@@ -50,6 +50,48 @@ function summarizeUserAgent(): string | undefined {
   return value ? value.slice(0, 160) : undefined;
 }
 
+async function waitForServiceWorker(
+  registration: ServiceWorkerRegistration,
+  timeoutMs = 15_000,
+): Promise<ServiceWorker> {
+  const existing = registration.active ?? registration.waiting ?? registration.installing;
+  if (existing?.state === "activated") return existing;
+
+  return new Promise((resolve, reject) => {
+    const worker = registration.installing ?? registration.waiting ?? registration.active;
+    if (!worker) {
+      reject(new Error("notifications/sw-missing"));
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      worker.removeEventListener("statechange", onStateChange);
+      reject(new Error("notifications/sw-timeout"));
+    }, timeoutMs);
+
+    function onStateChange() {
+      if (worker!.state === "activated") {
+        window.clearTimeout(timer);
+        worker!.removeEventListener("statechange", onStateChange);
+        resolve(worker!);
+      }
+      if (worker!.state === "redundant") {
+        window.clearTimeout(timer);
+        worker!.removeEventListener("statechange", onStateChange);
+        reject(new Error("notifications/sw-failed"));
+      }
+    }
+
+    if (worker.state === "activated") {
+      window.clearTimeout(timer);
+      resolve(worker);
+      return;
+    }
+
+    worker.addEventListener("statechange", onStateChange);
+  });
+}
+
 export async function enableNotifications(uid: string): Promise<void> {
   const capability = await getNotificationCapability();
   if (capability === "unsupported") throw new Error("notifications/unsupported");
@@ -61,17 +103,35 @@ export async function enableNotifications(uid: string): Promise<void> {
   const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY?.trim();
   if (!vapidKey) throw new Error("notifications/missing-vapid-key");
 
-  const registration = await navigator.serviceWorker.register("/firebase-messaging-sw.js", {
-    scope: "/",
-  });
-  await navigator.serviceWorker.ready;
+  let registration: ServiceWorkerRegistration;
+  try {
+    registration = await navigator.serviceWorker.register("/firebase-messaging-sw.js", {
+      scope: "/",
+      updateViaCache: "none",
+    });
+    await waitForServiceWorker(registration);
+    await registration.update().catch(() => undefined);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    if (message.startsWith("notifications/")) throw error;
+    throw new Error("notifications/sw-failed");
+  }
 
   const { getMessaging, getToken } = await import("firebase/messaging");
   const { app, db } = getFirebaseClient();
-  const fcmToken = await getToken(getMessaging(app), {
-    vapidKey,
-    serviceWorkerRegistration: registration,
-  });
+  let fcmToken: string;
+  try {
+    fcmToken = await getToken(getMessaging(app), {
+      vapidKey,
+      serviceWorkerRegistration: registration,
+    });
+  } catch (error) {
+    const detail = error instanceof Error ? error.message.toLowerCase() : "";
+    if (detail.includes("pushmanager") || detail.includes("push service")) {
+      throw new Error("notifications/push-unavailable");
+    }
+    throw new Error("notifications/token-unavailable");
+  }
   if (!fcmToken) throw new Error("notifications/token-unavailable");
 
   const id = getOrCreateDeviceId();
