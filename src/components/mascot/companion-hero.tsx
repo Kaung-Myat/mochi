@@ -1,16 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useGameFeedback } from "@/components/game/game-feedback-provider";
 import { MochiMascot } from "./mochi-mascot";
 
 const loveNotes = [
-  "မင်းလာတာနဲ့ Mochi ရဲ့နေ့လေး ပိုလှသွားပြီ။",
-  "ဒီနေ့လည်း မင်းဘေးမှာ တိတ်တိတ်လေး အားပေးနေမယ်နော်။",
-  "အလျင်မလိုဘူးနော်။ တစ်ခုပြီးတစ်ခု အတူလုပ်ကြမယ်။",
-  "မင်းပျော်နေရင် Mochi လည်း ပျော်တယ်။",
-  "နည်းနည်းပင်ပန်းရင် Mochi ကို ထပ်ပွတ်ပေးနော်။",
+  "မင်းလာတာနဲ့… Mochi ရဲ့နေ့လေး ပိုချိုသွားပြီ။",
+  "မင်းအတွက်ပဲ တိတ်တိတ်လေး စောင့်နေတာနော်။",
+  "မင်းပြုံးလိုက်ရင် Mochi လည်း အလိုလိုပျော်သွားတယ်။",
+  "တို့နှစ်ယောက် အတူတူ ဖြည်းဖြည်းလုပ်ကြမယ်နော်။",
+  "ပင်ပန်းရင်… Mochi ကို ပွတ်ပေးပါဦးနော်။",
+  "မင်းရှိနေတာတင် Mochi အတွက် လုံလောက်ပြီးသား။",
 ];
 
 export type CompanionAction = {
@@ -37,11 +38,21 @@ export function CompanionHero({
   const { play } = useGameFeedback();
   const [noteIndex, setNoteIndex] = useState(0);
   const [petted, setPetted] = useState(false);
+  const [bubbleKey, setBubbleKey] = useState(0);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setNoteIndex((value) => (value + 1) % loveNotes.length);
+      setBubbleKey((value) => value + 1);
+    }, 7000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   function petMochi() {
     setNoteIndex((value) => (value + 1) % loveNotes.length);
+    setBubbleKey((value) => value + 1);
     setPetted(true);
-    window.setTimeout(() => setPetted(false), 650);
+    window.setTimeout(() => setPetted(false), 700);
     play("pet");
   }
 
@@ -58,13 +69,20 @@ export function CompanionHero({
       <ActionColumn actions={actions.filter((_, index) => index % 2 === 0)} side="left" />
       <ActionColumn actions={actions.filter((_, index) => index % 2 === 1)} side="right" />
 
-      <div className="companion-bubble rounded-2xl border-[3px] border-white bg-white/95 px-2.5 py-1.5 text-center text-[0.78rem] font-medium text-[#3a2a24] shadow-[0_5px_0_rgb(90,40,30)]">
-        {loveNotes[noteIndex]}
-        <span className="mt-0.5 block text-[0.68rem] font-semibold text-[#8a5a32]">
-          {greeting}
-          {name ? `၊ ${name}` : ""}
+      <div key={bubbleKey} className="companion-bubble companion-speech" role="status">
+        <div className="companion-speech-card">
+          <p className="companion-speech-tag">MOCHI SAYS</p>
+          <p className="companion-speech-line">{loveNotes[noteIndex]}</p>
+          <p className="companion-speech-meta">
+            {greeting}
+            {name ? `၊ ${name}` : ""}
+          </p>
+          <p className="companion-speech-next">{nextUp}</p>
+        </div>
+        <span className="companion-speech-tail" aria-hidden="true" />
+        <span className="companion-speech-heart" aria-hidden="true">
+          ♥
         </span>
-        <span className="mt-0.5 block truncate text-[0.65rem] text-stone-500">{nextUp}</span>
       </div>
 
       <button
