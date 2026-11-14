@@ -165,9 +165,9 @@ export function TummyEntryForm({ entryId }: { entryId?: string }) {
   }
 
   return (
-    <>
+    <div className="flex min-h-0 flex-1 flex-col">
       <form className="diary-entry-form flex min-h-0 flex-1 flex-col" onSubmit={submit}>
-        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain pb-3">
+        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain pb-4">
           <p className="rounded-2xl bg-[#ffe8d8] px-3 py-2 text-[0.72rem] leading-snug text-[#6b4a3a]">
             Mochi က မှတ်ထားပေးတာပါ — ရောဂါရှာဖွေခြင်း / ဆေးအကြံ မဟုတ်ပါ။
           </p>
@@ -257,15 +257,16 @@ export function TummyEntryForm({ entryId }: { entryId?: string }) {
           )}
         </div>
 
-        <div className="relative z-10 -mx-4 mt-auto flex shrink-0 gap-2 border-t border-[#f0d2bc]/70 bg-[#fff4ea] px-4 pt-3 pb-[max(0.85rem,env(safe-area-inset-bottom))]">
+        <div className="relative z-20 -mx-4 mt-auto flex shrink-0 gap-2 border-t border-[#f0d2bc]/70 bg-[#fff4ea] px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-[0_-8px_24px_rgb(255_244_234_/_.9)]">
           <Link
-            className="inline-flex min-h-11 items-center justify-center rounded-full border-2 border-[#3a2a24]/15 bg-white px-4 text-sm font-semibold text-[#3a2a24]"
+            className="inline-flex min-h-12 items-center justify-center rounded-full border-2 border-[#3a2a24]/15 bg-white px-4 text-sm font-semibold text-[#3a2a24]"
             href="/tummy"
           >
             ပယ်မယ်
           </Link>
           <button
-            className="min-h-11 flex-1 rounded-full bg-[#3a2a24] px-5 text-sm font-semibold text-white shadow-[0_4px_0_#1f1612] disabled:opacity-50 active:translate-y-0.5 active:shadow-none"
+            type="submit"
+            className="min-h-12 flex-1 rounded-full bg-[#7a45f5] px-5 text-sm font-semibold text-white shadow-[0_4px_0_#4520aa] disabled:opacity-50 active:translate-y-0.5 active:shadow-none"
             disabled={saving}
           >
             {saving ? "သိမ်းနေတယ်…" : entryId ? "သိမ်းမယ်" : "မှတ်ထားမယ်"}
@@ -407,7 +408,7 @@ export function TummyEntryForm({ entryId }: { entryId?: string }) {
           </button>
         </div>
       </BottomSheet>
-    </>
+    </div>
   );
 }
 
