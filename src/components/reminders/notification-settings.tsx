@@ -91,6 +91,7 @@ export function NotificationSettings() {
       setCapability(nextCapability);
       setRegistered(nextCapability === "granted" && hasLocalNotificationDevice());
     } catch (caught) {
+      console.error("Notification settings action failed", action, caught);
       setError(notificationErrorMessage(caught));
     } finally {
       setBusy(null);
@@ -393,26 +394,49 @@ function TimeField({
 
 function notificationErrorMessage(error: unknown): string {
   const value = error instanceof Error ? error.message : "";
-  if (value.includes("denied")) {
+  const code = value.replace(/^notifications\//, "");
+
+  if (code === "denied" || value === "notifications/denied") {
     return "Notification ကို browser က ပိတ်ထားပါတယ်။ Site settings ထဲမှာ Allow ပြောင်းပေးပါ။";
   }
-  if (value.includes("unsupported")) {
+  if (code === "unsupported") {
     return "ဒီ browser သို့မဟုတ် device မှာ Web Push ကို အသုံးပြုလို့မရသေးပါဘူး။ Chrome နဲ့ ထပ်စမ်းပေးနော်။";
   }
-  if (value.includes("missing-vapid-key")) {
+  if (code === "missing-vapid-key") {
     return "VAPID key မတွေ့ပါဘူး။ .env.local ကိုစစ်ပြီး dev server ပြန်ဖွင့်ပေးပါ။";
   }
-  if (value.includes("sw-timeout") || value.includes("sw-failed") || value.includes("sw-missing")) {
+  if (code === "sw-timeout" || code === "sw-failed" || code === "sw-missing") {
     return "Service worker မတက်နိုင်သေးဘူး။ အင်တာနက်စစ်ပြီး Chrome ကို ပြန်ဖွင့်ကာ ထပ်စမ်းပေးနော်။";
   }
-  if (value.includes("push-unavailable")) {
+  if (code === "push-unavailable") {
     return "ဒီစက်မှာ Push service မရသေးပါဘူး။ Chrome app notifications ဖွင့်ထားကြောင်း စစ်ပေးပါ။";
   }
-  if (value.includes("token-unavailable")) {
+  if (code === "token-unavailable") {
     return "FCM token မရသေးဘူး။ Permission ခွင့်ပြုပြီးမှ ထပ်စမ်းပေးနော်။";
   }
-  if (value.includes("not-found") || value.includes("internal")) {
-    return "စမ်းသပ်သတိပေးချက်ပို့မယ့် backend ကို မတင်ရသေးပါဘူး။";
+  if (code === "offline") {
+    return "အင်တာနက် / VPN ကြောင့် ချိတ်ဆက်မရသေးဘူး။ VPN ပိတ်ပြီး Wi‑Fi ကောင်းကောင်းနဲ့ ထပ်စမ်းပေးနော်။";
   }
-  return "သတိပေးချက်ကို မပြင်ဆင်နိုင်သေးပါဘူး။ အင်တာနက်စစ်ပြီး ထပ်စမ်းပေးနော်။";
+  if (code === "firestore-permission" || code === "prefs-save-failed" || code === "device-save-failed") {
+    return "သတိပေးချက်ဆက်တင်ကို မသိမ်းနိုင်သေးဘူး။ ထပ်လော့ဂ်အင်ဝင်ပြီး ထပ်စမ်းပေးနော်။";
+  }
+  if (code === "no-active-device") {
+    return "ဒီစက် token မတွေ့သေးဘူး။ အရင် “ဒီစက်မှာ သတိပေးချက်ဖွင့်မယ်” ကို ပြန်နှိပ်ပေးနော်။";
+  }
+  if (code === "delivery-unavailable") {
+    return "သတိပေးချက် ပို့မရသေးဘူး။ Chrome notifications ဖွင့်ထားကြောင်း စစ်ပြီး ထပ်စမ်းပေးနော်။";
+  }
+  if (code === "unauthenticated" || code === "401") {
+    return "အကောင့် session ကုန်သွားပြီ။ ထပ်လော့ဂ်အင်ဝင်ပြီး ထပ်စမ်းပေးနော်။";
+  }
+  if (code === "rate-limited" || code === "429") {
+    return "ခဏအရမ်းများနှိပ်မိသွားတယ်။ စက္ကန့်အနည်းငယ်စောင့်ပြီး ထပ်စမ်းပေးနော်။";
+  }
+  if (code === "admin-not-configured") {
+    return "Firebase Admin credentials မထည့်ရသေးဘူး။ .env.local ထဲ FIREBASE_ADMIN_PROJECT_ID / CLIENT_EMAIL / PRIVATE_KEY ထည့်ပြီး server ပြန်ဖွင့်ပေးနော်။";
+  }
+  if (code === "not-found" || code === "internal" || code === "500" || code === "503") {
+    return "သတိပေးချက် backend မရသေးဘူး။ server env (Firebase Admin) ကို စစ်ပြီး ထပ်စမ်းပေးနော်။";
+  }
+  return "သတိပေးချက်ကို မပြင်ဆင်နိုင်သေးဘူး။ အင်တာနက်စစ်ပြီး ထပ်စမ်းပေးနော်။";
 }

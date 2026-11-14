@@ -5,8 +5,10 @@ import {
   onSnapshot,
   serverTimestamp,
   setDoc,
+  updateDoc,
   type Unsubscribe,
 } from "firebase/firestore";
+import { FirebaseError } from "firebase/app";
 import { getFirebaseClient } from "@/lib/firebase/client";
 import {
   defaultReminderPreferences,
@@ -136,7 +138,6 @@ export async function enableNotifications(uid: string): Promise<void> {
 
   const id = getOrCreateDeviceId();
   const reference = doc(db, "users", uid, "devices", id);
-  const existing = await getDoc(reference);
   const value = deviceRegistrationSchema.parse({
     id,
     fcmToken,
@@ -153,16 +154,25 @@ export async function enableNotifications(uid: string): Promise<void> {
     enabled: value.enabled,
   };
 
-  await setDoc(
-    reference,
-    {
-      ...device,
-      ...(existing.exists() ? {} : { createdAt: serverTimestamp() }),
-      updatedAt: serverTimestamp(),
-      lastSeenAt: serverTimestamp(),
-    },
-    { merge: true },
-  );
+  try {
+    const existing = await getDoc(reference);
+    if (existing.exists()) {
+      await updateDoc(reference, {
+        ...device,
+        updatedAt: serverTimestamp(),
+        lastSeenAt: serverTimestamp(),
+      });
+    } else {
+      await setDoc(reference, {
+        ...device,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        lastSeenAt: serverTimestamp(),
+      });
+    }
+  } catch (error) {
+    throw mapFirestoreError(error, "notifications/device-save-failed");
+  }
 
   try {
     await refreshReminderSchedule();
@@ -205,6 +215,25 @@ export function subscribeReminderPreferences(
   );
 }
 
+function mapFirestoreError(error: unknown, fallback: string): Error {
+  if (error instanceof FirebaseError) {
+    if (error.code === "permission-denied") {
+      return new Error("notifications/firestore-permission");
+    }
+    if (error.code === "unavailable" || error.code === "deadline-exceeded") {
+      return new Error("notifications/offline");
+    }
+    if (error.message.toLowerCase().includes("offline")) {
+      return new Error("notifications/offline");
+    }
+  }
+  const message = error instanceof Error ? error.message.toLowerCase() : "";
+  if (message.includes("offline") || message.includes("network") || message.includes("fetch")) {
+    return new Error("notifications/offline");
+  }
+  return new Error(fallback);
+}
+
 export async function saveReminderPreferences(
   uid: string,
   preferences: ReminderPreferences,
@@ -212,16 +241,27 @@ export async function saveReminderPreferences(
   const value = reminderPreferencesSchema.parse(preferences);
   const { db } = getFirebaseClient();
   const reference = doc(db, "users", uid, "reminderSettings", "preferences");
-  const existing = await getDoc(reference);
-  await setDoc(
-    reference,
-    {
-      ...value,
-      ...(existing.exists() ? {} : { createdAt: serverTimestamp() }),
-      updatedAt: serverTimestamp(),
-    },
-    { merge: true },
-  );
+
+  try {
+    const existing = await getDoc(reference);
+    if (existing.exists()) {
+      await updateDoc(reference, {
+        ...value,
+        updatedAt: serverTimestamp(),
+      });
+    } else {
+      await setDoc(reference, {
+        ...value,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+    }
+  } catch (error) {
+    throw mapFirestoreError(error, "notifications/prefs-save-failed");
+  }
+
+  // Rebuild schedule so toggles take effect; don't fail the save if backend is down.
+  await refreshReminderSchedule().catch(() => undefined);
 }
 
 export async function sendTestReminder(): Promise<void> {
@@ -245,12 +285,20 @@ async function authenticatedPost(path: string): Promise<void> {
   const { auth } = getFirebaseClient();
   const token = await auth.currentUser?.getIdToken();
   if (!token) throw new Error("notifications/unauthenticated");
-  const response = await fetch(path, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
-  });
+
+  let response: Response;
+  try {
+    response = await fetch(path, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  } catch {
+    throw new Error("notifications/offline");
+  }
+
   if (!response.ok) {
     const body = (await response.json().catch(() => null)) as { error?: string } | null;
-    throw new Error(`notifications/${body?.error ?? response.status}`);
+    const code = body?.error ?? String(response.status);
+    throw new Error(`notifications/${code}`);
   }
 }

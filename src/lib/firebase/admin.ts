@@ -5,6 +5,15 @@ import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
 import { getMessaging } from "firebase-admin/messaging";
 
+export class FirebaseAdminConfigError extends Error {
+  readonly code = "admin-not-configured";
+
+  constructor() {
+    super("Firebase Admin credentials are not configured on the server.");
+    this.name = "FirebaseAdminConfigError";
+  }
+}
+
 function getAdminApp() {
   const existing = getApps()[0];
   if (existing) return existing;
@@ -14,7 +23,7 @@ function getAdminApp() {
   const privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(/\\n/g, "\n").trim();
 
   if (!projectId || !clientEmail || !privateKey) {
-    throw new Error("Firebase Admin credentials are not configured on the server.");
+    throw new FirebaseAdminConfigError();
   }
 
   return initializeApp({ credential: cert({ projectId, clientEmail, privateKey }), projectId });
